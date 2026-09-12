@@ -1,0 +1,4 @@
+import { PageHero, TreatmentGrid, CTASection } from '../../components/Site';
+import { seo } from '../../lib/seo';
+export const metadata=seo('Beauty & Aesthetic Treatments Hyde | NG Aesthetics','Explore facials, skin treatments, bridal makeup, brows, threading and waxing in Hattersley, Hyde. Find your treatment and enquire about an appointment.','/treatments');
+export default function Treatments(){return <main id="main"><PageHero label="THE TREATMENT COLLECTION" title="A little care. A lot of you." copy="From your everyday beauty ritual to something for a special occasion, find your moment at NG Aesthetics & Beauty Lab."/><section className="section collection"><TreatmentGrid/><p className="image-disclosure">Images are illustrative and do not show the actual salon, clients or treatment results.</p></section><CTASection/></main>}
