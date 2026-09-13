@@ -1,22 +1,52 @@
 # NG Aesthetics & Beauty Lab
 
-Responsive salon website built with React and Vinext, with 18 content pages, original supplied logo, generated illustrative photography, structured prices, local SEO and WhatsApp enquiry flow.
+React + TypeScript frontend, Vite build tooling, and a standalone Node.js HTTP backend. The migration removes Next.js and Vinext while retaining all 18 pages, the salon design, map, review carousel, prices and WhatsApp enquiry flow.
 
-## Run
+## Run locally
 
-Use Node 22.13+ and npm. On Windows PowerShell use `npm.cmd` if script execution is disabled.
+Use Node.js 22.13+ and npm. In Windows PowerShell, use `npm.cmd` if script execution is disabled.
 
 ```sh
 npm install
 npm run dev
-npm run lint
-npx tsc --noEmit
-node scripts/check-site.mjs
-node scripts/check-browser.mjs
-npm run build
 ```
 
-The check scripts require the development server at localhost:3000. Override the HTTP checker using TEST_ORIGIN if necessary. Browser QA uses an isolated headless Chrome session, with no access to your personal browser profile. All requested widths (375, 390, 430, 768, 1024 and 1440px), mobile navigation, pricing accordions, enquiry validation and WhatsApp message preparation passed. Axe reported zero WCAG A/AA violations on five representative pages. Screenshots and the accessibility report are under `outputs/qa/`. These checks are not a claim of full WCAG certification or a published PageSpeed score.
+Open http://127.0.0.1:3000. The Node server integrates Vite in development for React hot updates. Set `PORT` if port 3000 is occupied.
+
+## Build and run in production
+
+```sh
+npm run build
+npm start
+```
+
+Production listens on `HOST` (default `0.0.0.0`) and `PORT` (default `3000`). Deploy the complete `dist/` directory to any Node.js host and start `node dist/node.mjs`. The production bundle contains its React dependencies, so it does not require Vite or a development server. Supply environment variables through the host; local development also reads ignored `.env.local` and `.env` files without overriding existing process variables.
+
+## Structure and routing
+
+- `client/main.tsx`: hydrates the server-rendered React application.
+- `app/App.tsx`: explicit route registry for static pages and treatment slugs; links use standard browser navigation and direct URLs work on refresh.
+- `app/` and `components/`: ordinary React components, with no Next.js routing or runtime dependency.
+- `server/node.mjs`: standalone Node HTTP server, public static-file delivery and development integration.
+- `server/handler.tsx`: React server rendering, page-specific SEO metadata, sitemap, robots, 404s and API routing.
+- `server/google-reviews.ts`: server-only Google Places API access.
+- `server/worker.ts`: small adapter for the existing private Sites host. Sites runs this adapter on its Worker runtime; use the Node entrypoint above on a Node.js host.
+- `dist/client/`: public browser assets. `dist/server/` and `dist/template.html` are private server files and must not be exposed as static roots.
+
+All pages arrive as rendered HTML and hydrate with React. Canonicals, Open Graph/X previews, structured salon data, treatment-specific images and real 404 responses are preserved. Public `VITE_SITE_URL` is a build-time setting; server secrets must never use a `VITE_` prefix.
+
+## Validation
+
+```sh
+npm run lint
+npm run typecheck
+npm run build
+npm test
+```
+
+The test command starts an isolated production Node server on an ephemeral local port. It checks all 18 pages, 38 prices, internal links, image assets, metadata, sitemap, robots, HTTP methods, restricted file paths, browser bundle secret isolation and the Google reviews backend. It does not contact Google with test credentials. `npm run test:site` checks a running development server; override `TEST_ORIGIN` if needed.
+
+The optional `scripts/check-browser.mjs` checks browser interactions and accessibility when browser testing is requested. Reports under `outputs/qa/` predate this migration and are not evidence of a new browser test run.
 
 ## Content updates
 
@@ -27,7 +57,7 @@ The check scripts require the development server at localhost:3000. Override the
 - Gallery: `app/gallery/page.tsx`. Replace illustrative images with approved salon/client photographs, with consent and accurate labels. Do not represent generated images as business premises or results.
 - Reviews: `components/GoogleReviews.tsx` loads `/api/google-reviews`; missing configuration or API failures show the Google Maps fallback. See setup below.
 - Booking enquiries: `components/ContactForm.tsx`. The validated form prepares a message; the visitor follows a link and sends it in WhatsApp. No website database, email delivery or appointment confirmation is implied.
-- Domain: update `business.siteUrl` or NEXT_PUBLIC_SITE_URL before rebuilding for a custom domain. Canonicals, social metadata, sitemap and robots share this value.
+- Domain: update `business.siteUrl` or VITE_SITE_URL before rebuilding for a custom domain. Canonicals, social metadata, sitemap and robots share this value.
 
 ## Before a public launch
 
@@ -51,7 +81,7 @@ Responsive WebP files are served locally. Cormorant Garamond and Manrope Latin W
 1. Enable Google Places API (New) and billing in your Google Cloud project. Restrict the key to Places API (New), with server IP restrictions where your hosting provides stable egress IPs.
 2. Copy `.env.example` to `.env.local` and set `GOOGLE_MAPS_API_KEY`. Never use a `NEXT_PUBLIC_` or `VITE_` prefix for this secret.
 3. Run `node scripts/resolve-google-place.mjs`. This uses Places API (New) Text Search with the supplied name and coordinates, and only saves `GOOGLE_PLACE_ID` on a unique exact-name match within 300 metres. Ambiguous results require manual confirmation; it never scrapes Maps HTML.
-4. Set both `GOOGLE_MAPS_API_KEY` (secret) and `GOOGLE_PLACE_ID` in Sites runtime environment settings. The local file is ignored by Git and never packaged. Restart the local server after changing local environment values.
+4. Set both `GOOGLE_MAPS_API_KEY` (secret) and `GOOGLE_PLACE_ID` in your Node hosting environment, or in Sites runtime environment settings for the existing private site. The local file is ignored by Git and never packaged. Restart the local server after changing local environment values.
 5. Check `/api/google-reviews` returns `available: true` and verify the live business, aggregate rating, count, authors, dates and links. No live verification is possible until credentials are configured.
 
 Places API (New) returns up to five reviews sorted by relevance, with no latest-first option or review pagination. The carousel preserves this order and labels it. Each card shows the original review text, with four initial lines and expansion when it overflows, author name/profile/avatar where returned, rating, date, attribution and source link. A rating-only review remains text-free. No sample reviews are included.

@@ -1,4 +1,4 @@
-'use client';
+
 import { useState } from 'react';
 import { business } from '../lib/business';
 import { categories } from '../lib/services';

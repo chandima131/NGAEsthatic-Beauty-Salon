@@ -1,4 +1,4 @@
-'use client';
+
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { googleMapsUrl, safeGoogleUrl, type GoogleReview, type GoogleReviewsData } from '../lib/google-reviews';

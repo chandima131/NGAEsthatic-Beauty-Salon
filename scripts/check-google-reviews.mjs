@@ -8,7 +8,8 @@ function load(path, dependencies = {}) {
   return exports;
 }
 const shared = load('lib/google-reviews.ts');
-const { GET } = load('app/api/google-reviews/route.ts', { '../../../lib/google-reviews': shared });
+const { getGoogleReviews } = load('server/google-reviews.ts', { '../lib/google-reviews': shared });
+const GET = () => getGoogleReviews(process.env);
 const savedFetch = globalThis.fetch;
 const savedKey = process.env.GOOGLE_MAPS_API_KEY;
 const savedId = process.env.GOOGLE_PLACE_ID;
@@ -24,7 +25,7 @@ try {
       if (scenario === 'timeout') throw Error('timeout TEST_ONLY_SECRET');
       if (scenario === 'error') return new Response('TEST_ONLY_SECRET', { status: 403 });
       if (scenario === 'malformed') return new Response('invalid json');
-      return Response.json({ id: scenario === 'wrong-place' ? 'another' : 'TEST_ONLY_ID', rating: 4, userRatingCount: 1, reviews: [] });
+      return Response.json({ id: scenario === 'wrong-place' ? 'another' : 'TEST_ONLY_ID', rating: 4, userRatingCount: 1, reviews: scenario === 'wrong-place' ? [{ rating: 4 }] : [] });
     };
     const response = await GET();
     assert.match(response.headers.get('Cache-Control'), /no-store/);

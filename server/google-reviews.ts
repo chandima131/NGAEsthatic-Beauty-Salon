@@ -1,12 +1,12 @@
-import { type GoogleReview, type GoogleReviewsData, safeGoogleUrl } from '../../../lib/google-reviews';
+import { type GoogleReview, type GoogleReviewsData, safeGoogleUrl } from '../lib/google-reviews';
 
 // This route is the only application code that reads the secret. Never cache
 // Google review content in the browser, CDN, framework cache, or database.
-export const dynamic = 'force-dynamic';
+export type ReviewEnvironment = { GOOGLE_MAPS_API_KEY?: string; GOOGLE_PLACE_ID?: string };
 const headers = { 'Cache-Control': 'private, no-store, max-age=0' };
-export async function GET() {
-  const key = process.env.GOOGLE_MAPS_API_KEY;
-  const placeId = process.env.GOOGLE_PLACE_ID;
+export async function getGoogleReviews(env: ReviewEnvironment) {
+  const key = env.GOOGLE_MAPS_API_KEY;
+  const placeId = env.GOOGLE_PLACE_ID;
   if (!key || !placeId) return Response.json({ available: false }, { headers });
   try {
     const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=en`, {
