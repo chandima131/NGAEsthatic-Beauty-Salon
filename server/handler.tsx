@@ -3,7 +3,6 @@ import App, { resolveRoute } from '../app/App';
 import { salonSchema, type Metadata } from '../lib/seo';
 import sitemap from '../app/sitemap';
 import robots from '../app/robots';
-import { getGoogleReviews, type ReviewEnvironment } from './google-reviews';
 
 const escape = (value: string) => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 function renderHead(metadata: Metadata, status: number) {
@@ -19,14 +18,10 @@ function renderHead(metadata: Metadata, status: number) {
 
 // Shared request handling for the standalone Node server and existing Sites host.
 // Only these public asset directories can fall through to static file serving.
-export async function handleRequest(request: Request, env: ReviewEnvironment, template: string): Promise<Response | null> {
+export async function handleRequest(request: Request, template: string): Promise<Response | null> {
   const { pathname } = new URL(request.url);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   const respond = (body: string, type: string, status = 200) => new Response(request.method === 'HEAD' ? null : body, { status, headers: { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' } });
-  if (pathname === '/api/google-reviews') {
-    const response = await getGoogleReviews(env);
-    return request.method === 'HEAD' ? new Response(null, response) : response;
-  }
   if (pathname.startsWith('/api/')) return respond('{"error":"Not found"}', 'application/json', 404);
   if (pathname === '/robots.txt') {
     const data = robots();

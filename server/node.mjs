@@ -22,7 +22,7 @@ async function serve(req, res) {
     const url = new URL(req.url || '/', 'http://localhost');
     const handler = dev ? await vite.ssrLoadModule('/server/handler.tsx') : production;
     const html = dev ? await vite.transformIndexHtml(url.pathname, await readFile(resolve(root, 'index.html'), 'utf8')) : template;
-    const response = await handler.handleRequest(new Request(url, { method: req.method }), process.env, html);
+    const response = await handler.handleRequest(new Request(url, { method: req.method }), html);
     if (response) {
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(req.method === 'HEAD' ? undefined : Buffer.from(await response.arrayBuffer()));

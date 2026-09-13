@@ -29,7 +29,7 @@ try {
   assert.match(client.headers.get('cache-control'), /immutable/);
   for (const path of ['/server/node.mjs', '/.env.local', '/package.json', '/assets/../../server/node.mjs', '/api/missing']) assert.equal((await fetch(origin + path)).status, 404, path);
   assert.equal((await fetch(origin + '/assets/%zz')).status, 400);
-  for (const path of ['/', '/api/google-reviews']) {
+  for (const path of ['/']) {
     const post = await fetch(origin + path, { method: 'POST' });
     assert.equal(post.status, 405);
     assert.equal(post.headers.get('allow'), 'GET, HEAD');
@@ -38,12 +38,14 @@ try {
     assert.equal(await head.text(), '');
   }
   const reviews = await fetch(origin + '/api/google-reviews');
-  assert.match(reviews.headers.get('cache-control'), /no-store/);
-  assert.deepEqual(await reviews.json(), { available: false });
+  assert.equal(reviews.status, 404);
+  assert.deepEqual(await reviews.json(), { error: 'Not found' });
+  for (const name of ['Shabz', 'Lisa Bevan', 'Astrella Kate', 'Irene Shode', 'Nosheen Khan', 'Susie Law']) assert.ok(homepage.includes(name));
+  assert.ok(!clientCode.includes('/api/google-reviews'));
   const pkg = JSON.parse(await readFile('package.json', 'utf8'));
   assert.ok(!pkg.dependencies.next && !pkg.devDependencies.vinext);
   for (const name of await readdir('dist/client/assets')) {
     if (name.endsWith('.js')) assert.ok(!(await readFile('dist/client/assets/' + name, 'utf8')).includes('GOOGLE_MAPS_API_KEY'));
   }
-  console.log('PASS: standalone production Node server, SSR, client assets, 404s, protected files, HEAD/405, Google fallback, and secret isolation.');
+  console.log('PASS: standalone production Node server, SSR, client assets, 404s, protected files, HEAD/405, static client reviews, and secret isolation.');
 } finally { child.kill(); }

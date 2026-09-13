@@ -11,7 +11,7 @@
     "start": "node dist/node.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/check-server.mjs && node scripts/check-google-reviews.mjs && node scripts/check-worker.mjs",
+    "test": "node scripts/check-server.mjs && node scripts/check-worker.mjs",
     "test:site": "node --experimental-strip-types scripts/check-site.mjs"
   },
   "dependencies": {
