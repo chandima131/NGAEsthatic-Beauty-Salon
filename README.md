@@ -54,7 +54,7 @@ The optional `scripts/check-browser.mjs` checks browser interactions and accessi
 - All 38 prices and treatment text: `lib/services.ts`. Prices were checked against the supplied brief and nine service graphics.
 - Original logo: `public/images/logo.jpg` (unchanged proportions).
 - Hero: `public/images/hero-beauty-salon.webp` and its 640px variant. All image sources are in the workspace; no runtime dependency on generated-image directories.
-- Gallery: `app/gallery/page.tsx`. Replace illustrative images with approved salon/client photographs, with consent and accurate labels. Do not represent generated images as business premises or results.
+- Gallery: `lib/gallery.ts` lists the four supplied treatment artworks in `public/images/gallery/`. `components/GalleryGrid.tsx` displays the complete images on the gallery page and homepage, with full-image links on the gallery page.
 - Reviews: `components/GoogleReviews.tsx` loads `/api/google-reviews`; missing configuration or API failures show the Google Maps fallback. See setup below.
 - Booking enquiries: `components/ContactForm.tsx`. The validated form prepares a message; the visitor follows a link and sends it in WhatsApp. No website database, email delivery or appointment confirmation is implied.
 - Domain: update `business.siteUrl` or VITE_SITE_URL before rebuilding for a custom domain. Canonicals, social metadata, sitemap and robots share this value.
