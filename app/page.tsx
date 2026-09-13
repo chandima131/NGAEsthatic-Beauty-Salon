@@ -1,3 +1,4 @@
+import LocationSection from '../components/LocationSection';
 import GoogleReviews from '../components/GoogleReviews';
 import { bookingUrl, business } from '../lib/business';
 import { Photo, TreatmentGrid, SectionHeading, Benefits, CTASection, PriceList } from '../components/Site';
@@ -12,5 +13,5 @@ return <main id="main">
 <section className="makeup-feature"><div className="makeup-copy"><p className="eyebrow">AN OCCASION TO FEEL BEAUTIFUL</p><h2>Makeup for Your<br/><em>Special Moments.</em></h2><p>A celebration, a wedding, a day to remember. Discover occasion makeup with a personal touch.</p><PriceList category={categories.find(c=>c.slug==='makeup')!}/><a className="button" href={bookingUrl('Makeup')}>Let’s plan your look ↗</a></div><div className="makeup-photo"><Photo name="makeup" alt="Illustrative elegant bridal and occasion makeup"/><span className="image-note">Illustrative makeup imagery</span></div></section>
 <Benefits/><GoogleReviews/>
 <section className="section instagram-section"><div className="heading-row"><SectionHeading eyebrow="THE BEAUTY EDIT" title="A little inspiration."/><a className="text-link" href={business.instagram}>{business.instagramHandle} ↗</a></div><div className="instagram-grid">{[['facial','Facial care inspiration'],['hero-beauty-salon','Salon atmosphere inspiration'],['makeup','Occasion makeup inspiration']].map(([image,alt])=><a key={image} href="/gallery"><Photo name={image} alt={alt}/><span>Explore the gallery ↗</span></a>)}</div><p className="image-disclosure">Illustrative images. Follow us on Instagram for the latest from NG Aesthetics & Beauty Lab.</p></section>
-<CTASection/></main>;
+<LocationSection/><CTASection/></main>;
 }
