@@ -33,7 +33,7 @@ The check scripts require the development server at localhost:3000. Override the
 
 Confirm owner biography/qualifications, visiting times, treatment suitability/preparation wording, client privacy information and booking/deposit/cancellation terms. These have not been invented. Policy pages explain the current website flow, with TODOs for owner-specific information.
 
-GA4, Meta Pixel and Search Console values are reserved in business configuration. Optional tracking is deliberately inactive; add a suitable consent implementation before enabling analytics or advertising. An external booking/payment provider can be connected through `business.bookingUrl`. No payment processor is currently configured. Google Maps is loaded only after the visitor selects its button.
+GA4, Meta Pixel and Search Console values are reserved in business configuration. Optional tracking is deliberately inactive; add a suitable consent implementation before enabling analytics or advertising. An external booking/payment provider can be connected through `business.bookingUrl`. No payment processor is currently configured. The homepage and contact page share a pink split-panel location section. Its Google Maps iframe loads automatically near the viewport, using the supplied coordinates; the adjacent link opens the exact business listing. Google map tiles, controls and attribution retain their original appearance.
 
 ## Images
 

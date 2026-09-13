@@ -2,14 +2,15 @@
 import { business } from '../lib/business';
 
 export default function LocationSection() {
-  return <section className="map-section" aria-labelledby="salon-location-title">
-    <div>
-      <p className="eyebrow">FIND YOUR WAY TO US</p>
-      <h2 id="salon-location-title">Your beauty destination<br/>in <em>Hattersley, Hyde.</em></h2>
-      <p>{business.name}<br/>{business.address}</p>
-      <a className="button outline" href={business.mapsUrl} target="_blank" rel="noopener noreferrer">Open Google Maps <span aria-hidden="true">↗</span></a>
-      <p className="fineprint">View our Google listing and get directions for your visit.</p>
+  return <section className="location-section" aria-labelledby="salon-location-title">
+    <div className="location-layout">
+      <div className="location-copy">
+        <p className="eyebrow">PLAN YOUR VISIT</p>
+        <h2 id="salon-location-title">Find your way<br/>to <span>NG Aesthetics.</span></h2>
+        <address><strong>{business.name}</strong><br/>{business.address}</address>
+        <a className="location-link" href={business.mapsUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps <span aria-hidden="true">↗</span></a>
+      </div>
+      <Map/>
     </div>
-    <Map/>
   </section>;
 }
