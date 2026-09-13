@@ -25,7 +25,7 @@ The check scripts require the development server at localhost:3000. Override the
 - Original logo: `public/images/logo.jpg` (unchanged proportions).
 - Hero: `public/images/hero-beauty-salon.webp` and its 640px variant. All image sources are in the workspace; no runtime dependency on generated-image directories.
 - Gallery: `app/gallery/page.tsx`. Replace illustrative images with approved salon/client photographs, with consent and accurate labels. Do not represent generated images as business premises or results.
-- Reviews: `Testimonials` in `components/Site.tsx` remains hidden until genuine approved reviews are supplied.
+- Reviews: `components/GoogleReviews.tsx` loads `/api/google-reviews`; missing configuration or API failures show the Google Maps fallback. See setup below.
 - Booking enquiries: `components/ContactForm.tsx`. The validated form prepares a message; the visitor follows a link and sends it in WhatsApp. No website database, email delivery or appointment confirmation is implied.
 - Domain: update `business.siteUrl` or NEXT_PUBLIC_SITE_URL before rebuilding for a custom domain. Canonicals, social metadata, sitemap and robots share this value.
 
@@ -45,3 +45,15 @@ Built-in image generation was used for these illustrative assets:
 - `public/og.png`: branded landscape with exact title “NG Aesthetics & Beauty Lab” and subtitle “Beauty & aesthetic treatments in Hyde”.
 
 Responsive WebP files are served locally. Cormorant Garamond and Manrope Latin WOFF2 subsets are also served locally with font-display: swap.
+
+## Google reviews setup
+
+1. Enable Google Places API (New) and billing in your Google Cloud project. Restrict the key to Places API (New), with server IP restrictions where your hosting provides stable egress IPs.
+2. Copy `.env.example` to `.env.local` and set `GOOGLE_MAPS_API_KEY`. Never use a `NEXT_PUBLIC_` or `VITE_` prefix for this secret.
+3. Run `node scripts/resolve-google-place.mjs`. This uses Places API (New) Text Search with the supplied name and coordinates, and only saves `GOOGLE_PLACE_ID` on a unique exact-name match within 300 metres. Ambiguous results require manual confirmation; it never scrapes Maps HTML.
+4. Set both `GOOGLE_MAPS_API_KEY` (secret) and `GOOGLE_PLACE_ID` in Sites runtime environment settings. The local file is ignored by Git and never packaged. Restart the local server after changing local environment values.
+5. Check `/api/google-reviews` returns `available: true` and verify the live business, aggregate rating, count, authors, dates and links. No live verification is possible until credentials are configured.
+
+Places API (New) returns up to five reviews sorted by relevance, with no latest-first option or review pagination. The carousel preserves this order and labels it. Each card shows the original review text, with four initial lines and expansion when it overflows, author name/profile/avatar where returned, rating, date, attribution and source link. A rating-only review remains text-free. No sample reviews are included.
+
+The endpoint uses an eight-second timeout, a fixed environment Place ID, an explicit field mask and `no-store` for upstream and downstream responses. It never returns credentials or upstream errors. Review data is not persisted. The official Google Maps attribution asset is from https://developers.google.com/static/maps/documentation/images/Google_Maps_Attribution_Assets.zip. Attribution requirements: https://developers.google.com/maps/documentation/places/web-service/policies.

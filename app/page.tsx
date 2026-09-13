@@ -1,5 +1,6 @@
+import GoogleReviews from '../components/GoogleReviews';
 import { bookingUrl, business } from '../lib/business';
-import { Photo, TreatmentGrid, SectionHeading, Benefits, CTASection, Testimonials, PriceList } from '../components/Site';
+import { Photo, TreatmentGrid, SectionHeading, Benefits, CTASection, PriceList } from '../components/Site';
 import { categories } from '../lib/services';
 export default function Home() {
 return <main id="main">
@@ -9,7 +10,7 @@ return <main id="main">
 <section className="treatments-home"><div className="section"><div className="heading-row"><SectionHeading eyebrow="FIND YOUR MOMENT" title="Our Treatments" copy="Everyday rituals. Special occasions. Care that’s all about you."/><a className="text-link" href="/prices">View all prices ↗</a></div><TreatmentGrid/><p className="image-disclosure">Illustrative imagery, chosen to reflect our beauty and treatment offering.</p></div></section>
 <section className="section facial-feature"><div className="feature-image"><Photo name="facial" alt="Illustrative facial mask treatment in a calm salon"/><span className="image-note">Illustrative treatment imagery</span></div><div><p className="eyebrow">YOUR SKIN, YOUR MOMENT</p><h2>Slow down.<br/><em>Make time for your skin.</em></h2><p>From our Basic Dermabrasion Facial to the Deluxe Hydro Facial, discover a menu with room for your preferences. Let’s talk about the right appointment for you.</p><div className="featured-prices">{categories[0].treatments.filter(t=>["Microneedling Facial","Deluxe Hydro Facial","Gold Facial with 24K Gold Particles"].includes(t.name)).map(t=><div key={t.name}><span>{t.name}</span><strong>£{t.price}</strong></div>)}</div><a className="text-link" href="/treatments/facials">Explore all facials ↗</a></div></section>
 <section className="makeup-feature"><div className="makeup-copy"><p className="eyebrow">AN OCCASION TO FEEL BEAUTIFUL</p><h2>Makeup for Your<br/><em>Special Moments.</em></h2><p>A celebration, a wedding, a day to remember. Discover occasion makeup with a personal touch.</p><PriceList category={categories.find(c=>c.slug==='makeup')!}/><a className="button" href={bookingUrl('Makeup')}>Let’s plan your look ↗</a></div><div className="makeup-photo"><Photo name="makeup" alt="Illustrative elegant bridal and occasion makeup"/><span className="image-note">Illustrative makeup imagery</span></div></section>
-<Benefits/><Testimonials/>
+<Benefits/><GoogleReviews/>
 <section className="section instagram-section"><div className="heading-row"><SectionHeading eyebrow="THE BEAUTY EDIT" title="A little inspiration."/><a className="text-link" href={business.instagram}>{business.instagramHandle} ↗</a></div><div className="instagram-grid">{[['facial','Facial care inspiration'],['hero-beauty-salon','Salon atmosphere inspiration'],['makeup','Occasion makeup inspiration']].map(([image,alt])=><a key={image} href="/gallery"><Photo name={image} alt={alt}/><span>Explore the gallery ↗</span></a>)}</div><p className="image-disclosure">Illustrative images. Follow us on Instagram for the latest from NG Aesthetics & Beauty Lab.</p></section>
 <CTASection/></main>;
 }

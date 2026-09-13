@@ -40,3 +40,5 @@ next-env.d.ts
 *.tsbuildinfo
 /site-package.tar.gz
 
+
+!.env.example
