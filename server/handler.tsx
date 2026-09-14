@@ -16,8 +16,12 @@ function renderHead(metadata: Metadata, status: number) {
     + `<script type="application/ld+json">${JSON.stringify(salonSchema).replace(/</g, '\\u003c')}</script>`;
 }
 
-// Shared request handling for the standalone Node server and existing Sites host.
-// Only these public asset directories can fall through to static file serving.
+const sectionRedirects: Record<string, string> = {
+  '/about': '/#about', '/treatments': '/#services', '/prices': '/#services',
+  '/gallery': '/#gallery', '/contact': '/#contact', '/privacy': '/#privacy',
+  '/cookies': '/#privacy', '/terms': '/#privacy',
+};
+
 export async function handleRequest(request: Request, template: string): Promise<Response | null> {
   const { pathname } = new URL(request.url);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
@@ -29,6 +33,9 @@ export async function handleRequest(request: Request, template: string): Promise
   }
   if (pathname === '/sitemap.xml') return respond(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${sitemap().map(item => `<url><loc>${escape(item.url)}</loc><changefreq>${item.changeFrequency}</changefreq><priority>${item.priority}</priority></url>`).join('')}</urlset>`, 'application/xml; charset=utf-8');
   if (/^\/(assets|images|fonts)\//.test(pathname) || pathname === '/og.png' || pathname === '/screenshot.jpeg') return null;
+  const legacyTreatment = /^\/treatments\/[^/]+\/?$/.test(pathname);
+  const redirect = legacyTreatment ? '/#services' : sectionRedirects[pathname.replace(/\/+$/, '') || '/'];
+  if (redirect && pathname !== '/') return new Response(null, { status: 301, headers: { Location: redirect, 'Cache-Control': 'public, max-age=86400' } });
   const route = resolveRoute(pathname);
   const html = template.replace('<!--app-head-->', () => renderHead(route.metadata, route.status))
     .replace('<!--app-html-->', () => renderToString(<App pathname={pathname}/>));

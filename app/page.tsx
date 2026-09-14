@@ -1,18 +1,77 @@
 import GalleryGrid from '../components/GalleryGrid';
-import LocationSection from '../components/LocationSection';
 import GoogleReviews from '../components/GoogleReviews';
+import LocationSection from '../components/LocationSection';
+import ContactForm from '../components/ContactForm';
 import { bookingUrl, business } from '../lib/business';
-import { Photo, TreatmentGrid, SectionHeading, Benefits, CTASection, PriceList } from '../components/Site';
-import { categories } from '../lib/services';
+import { Photo, PriceDirectory, SectionHeading } from '../components/Site';
+
 export default function Home() {
-return <main id="main">
-<section className="hero"><div className="hero-copy"><p className="eyebrow">WELCOME TO NG AESTHETICS & BEAUTY LAB</p><h1>Beauty & Aesthetic<br/>Treatments in <em>Hyde.</em></h1><p className="lead">A little time for you.<br/>A beautiful feeling that stays.</p><p>Professional beauty and aesthetic treatments, personalised to you. Discover your next moment of care in our welcoming space in Hattersley, Hyde.</p><div className="actions"><a className="button" href={bookingUrl()}>Book Your Appointment <span>↗</span></a><a className="button outline" href="/treatments">Explore Treatments <span>↗</span></a></div><p className="hero-note">PERSONALISED CARE <span>✦</span> BEAUTIFULLY YOU</p></div><div className="hero-photo"><Photo name="hero-beauty-salon" alt="Illustrative blush and white salon with a therapist preparing a facial treatment" priority/><div className="photo-caption"><span>YOUR MOMENT OF CALM</span><p>Care, confidence <em>& a little luxury.</em></p></div><span className="image-note">Illustrative salon imagery</span></div></section>
-<div className="treatment-ribbon">FACIALS <span>✦</span> SKIN TREATMENTS <span>✦</span> BEAUTY <span>✦</span> MAKEUP <span>✦</span> WAXING</div>
-<section className="intro section"><p className="eyebrow">YOUR BEAUTY. YOUR WAY.</p><h2>Feel Confident.<br/><em>Look Beautiful.</em></h2><p>At NG Aesthetics & Beauty Lab, we offer a range of beauty, skin and aesthetic treatments in Hattersley, Hyde. From facials and skin boosters to makeup, threading and waxing, our aim is to provide a welcoming and professional experience tailored to you.</p><div className="intro-values"><span>Professional service</span><span>Personalised treatments</span><span>Friendly environment</span></div><a className="text-link" href="/about">Get to know us ↗</a></section>
-<section className="treatments-home"><div className="section"><div className="heading-row"><SectionHeading eyebrow="FIND YOUR MOMENT" title="Our Treatments" copy="Everyday rituals. Special occasions. Care that’s all about you."/><a className="text-link" href="/prices">View all prices ↗</a></div><TreatmentGrid/><p className="image-disclosure">Illustrative imagery, chosen to reflect our beauty and treatment offering.</p></div></section>
-<section className="section facial-feature"><div className="feature-image"><Photo name="facial" alt="Illustrative facial mask treatment in a calm salon"/><span className="image-note">Illustrative treatment imagery</span></div><div><p className="eyebrow">YOUR SKIN, YOUR MOMENT</p><h2>Slow down.<br/><em>Make time for your skin.</em></h2><p>From our Basic Dermabrasion Facial to the Deluxe Hydro Facial, discover a menu with room for your preferences. Let’s talk about the right appointment for you.</p><div className="featured-prices">{categories[0].treatments.filter(t=>["Microneedling Facial","Deluxe Hydro Facial","Gold Facial with 24K Gold Particles"].includes(t.name)).map(t=><div key={t.name}><span>{t.name}</span><strong>£{t.price}</strong></div>)}</div><a className="text-link" href="/treatments/facials">Explore all facials ↗</a></div></section>
-<section className="makeup-feature"><div className="makeup-copy"><p className="eyebrow">AN OCCASION TO FEEL BEAUTIFUL</p><h2>Makeup for Your<br/><em>Special Moments.</em></h2><p>A celebration, a wedding, a day to remember. Discover occasion makeup with a personal touch.</p><PriceList category={categories.find(c=>c.slug==='makeup')!}/><a className="button" href={bookingUrl('Makeup')}>Let’s plan your look ↗</a></div><div className="makeup-photo"><Photo name="makeup" alt="Illustrative elegant bridal and occasion makeup"/><span className="image-note">Illustrative makeup imagery</span></div></section>
-<Benefits/><GoogleReviews/>
-<section className="section instagram-section"><div className="heading-row"><SectionHeading eyebrow="THE BEAUTY EDIT" title="Our treatment gallery."/><a className="text-link" href="/gallery">View the full gallery ↗</a></div><GalleryGrid preview/><p className="gallery-follow">Follow <a href={business.instagram}>{business.instagramHandle}</a> for more from NG Aesthetics & Beauty Lab.</p></section>
-<LocationSection/><CTASection/></main>;
+  return <main id="main">
+    <section className="hero" id="home" aria-labelledby="hero-title">
+      <div className="hero-copy">
+        <p className="eyebrow">WELCOME TO NG AESTHETICS & BEAUTY LAB</p>
+        <h1 id="hero-title">Beauty & Aesthetic<br/>Treatments in <em>Hyde.</em></h1>
+        <p className="lead">A little time for you.<br/>A beautiful feeling that stays.</p>
+        <p>Professional beauty and aesthetic treatments, personalised to you in our welcoming space in Hattersley, Hyde.</p>
+        <div className="actions"><a className="button" href={bookingUrl()}>Book your appointment <span aria-hidden="true">↗</span></a><a className="button outline" href="#services">View services & prices</a></div>
+        <div className="hero-trust"><span>Facials</span><i>•</i><span>Skin</span><i>•</i><span>Beauty</span><i>•</i><span>Makeup</span></div>
+      </div>
+      <div className="hero-photo">
+        <Photo name="hero-beauty-salon" alt="Illustrative blush and white salon with a therapist preparing a treatment room" priority/>
+        <div className="photo-caption"><span>YOUR MOMENT OF CALM</span><p>Care, confidence <em>& a little luxury.</em></p></div>
+        <span className="image-note">Illustrative salon imagery</span>
+      </div>
+    </section>
+
+    <section className="about-section section" id="about" aria-labelledby="about-title">
+      <div className="about-photo"><Photo name="facial" alt="Illustrative relaxing facial treatment"/><div className="about-badge"><strong>NG</strong><span>A moment made for you</span></div><span className="image-note">Illustrative treatment imagery</span></div>
+      <div className="about-copy">
+        <p className="eyebrow">ABOUT US · HATTERSLEY, HYDE</p>
+        <h2 id="about-title">Feel confident.<br/><em>Look beautiful.</em></h2>
+        <p>At NG Aesthetics & Beauty Lab, we offer a range of beauty, skin and aesthetic treatments in Hattersley, Hyde. From rejuvenating facials and skin boosters to makeup, threading, waxing and beauty treatments, our aim is to provide a welcoming and professional experience tailored to you.</p>
+        <p>Whether you know exactly what you want or would like to talk through the options, your visit starts with a friendly conversation.</p>
+        <div className="about-values"><div><span>01</span><strong>Personalised care</strong></div><div><span>02</span><strong>Professional service</strong></div><div><span>03</span><strong>Friendly environment</strong></div></div>
+        <a className="text-link" href="#contact">Plan your visit <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+
+    <section className="services-section" id="services" aria-labelledby="services-title">
+      <div className="section">
+        <div className="services-heading">
+          <SectionHeading eyebrow="SERVICES & PRICE LIST" title={<>Everything you need to<br/><em>feel beautifully you.</em></>} copy="Explore every treatment and confirmed price in one place. Open a category to see its full menu, then book straight through WhatsApp."/>
+          <div className="service-collage" aria-label="Illustrative salon and treatment imagery">
+            <div><Photo name="facial" alt="Illustrative facial treatment"/></div><div><Photo name="makeup" alt="Illustrative occasion makeup"/></div><div><Photo name="hero-beauty-salon" alt="Illustrative beauty treatment room"/></div>
+          </div>
+        </div>
+        <PriceDirectory/>
+      </div>
+    </section>
+
+    <section className="gallery-section section" id="gallery" aria-labelledby="gallery-title">
+      <div className="split-heading"><SectionHeading eyebrow="OUR WORK" title={<>Real treatments.<br/><em>Beautiful details.</em></>} copy="A closer look at brows, beauty and skin treatments at NG Aesthetics & Beauty Lab."/><a className="text-link" href={business.instagram} target="_blank" rel="noopener noreferrer">Follow on Instagram <span aria-hidden="true">↗</span></a></div>
+      <GalleryGrid/>
+      <p className="gallery-note">Treatment images supplied by the business. Before-and-after photographs show individual experiences and do not guarantee the same result for everyone.</p>
+    </section>
+
+    <LocationSection/>
+    <GoogleReviews/>
+
+    <section className="contact-section" id="contact" aria-labelledby="contact-title">
+      <div className="section contact-layout">
+        <div className="contact-copy">
+          <p className="eyebrow">CONTACT US</p>
+          <h2 id="contact-title">Your next beauty moment<br/><em>starts here.</em></h2>
+          <p>Ask about a treatment, tell us your preferred date, or call for a friendly conversation before you book.</p>
+          <div className="contact-cards">
+            <a href={business.telephone}><small>CALL US</small><strong>{business.phone}</strong><span aria-hidden="true">↗</span></a>
+            <a href={bookingUrl()}><small>MESSAGE US</small><strong>Chat on WhatsApp</strong><span aria-hidden="true">↗</span></a>
+            <a href={business.instagram} target="_blank" rel="noopener noreferrer"><small>FOLLOW US</small><strong>{business.instagramHandle}</strong><span aria-hidden="true">↗</span></a>
+          </div>
+          <address><strong>Visit NG Aesthetics & Beauty Lab</strong><br/>Sgt Mark Stansfield Way<br/>Hattersley, Hyde · SK14 3FX<br/>United Kingdom</address>
+          <p className="contact-fineprint">Please contact us to confirm treatment suitability, availability and visiting times.</p>
+        </div>
+        <ContactForm/>
+      </div>
+    </section>
+  </main>;
 }

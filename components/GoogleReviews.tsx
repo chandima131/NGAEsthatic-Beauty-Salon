@@ -50,7 +50,7 @@ export default function GoogleReviews() {
     const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
     element.scrollBy({ left: direction * ((card?.offsetWidth || element.clientWidth) + gap), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   }
-  return <section className="google-reviews" aria-labelledby="google-reviews-title"><div className="section">
+  return <section id="reviews" className="google-reviews" aria-labelledby="google-reviews-title"><div className="section">
     <div className="google-review-heading"><p className="eyebrow">YOUR EXPERIENCE MATTERS</p><h2 id="google-reviews-title">Rated by Our Clients</h2></div>
     <div className="google-rating-summary"><img className="google-maps-logo" src="/images/google-maps-attribution.svg" alt="Google Maps" width="98" height="19"/><p>{clientReviews.length} selected Google reviews from our clients</p></div>
     <div className="review-carousel-heading"><p>A little love from our clients</p><div className="review-controls"><button aria-label="Previous review" aria-controls={trackId} disabled={position.start} onClick={() => move(-1)}>←</button><button aria-label="Next review" aria-controls={trackId} disabled={position.end} onClick={() => move(1)}>→</button></div></div>
