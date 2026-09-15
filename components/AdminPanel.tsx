@@ -19,9 +19,9 @@ type Booking = {
   start_time: string;
   duration_minutes: number;
 };
-type Overview = { admin: { email: string }; slots: Slot[]; blackouts: Blackout[]; bookings: Booking[] };
-type ApiError = { error?: string; signInUrl?: string };
-type AuthState = 'loading' | 'ready' | 'signin' | 'forbidden' | 'unconfigured' | 'error';
+type Overview = { admin: { authenticated: true }; slots: Slot[]; blackouts: Blackout[]; bookings: Booking[] };
+type ApiError = { error?: string };
+type AuthState = 'loading' | 'ready' | 'signin' | 'unconfigured' | 'error';
 
 const statuses: BookingStatus[] = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
 const statusLabels: Record<BookingStatus, string> = { pending: 'Pending', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled', no_show: 'No show' };
@@ -125,6 +125,9 @@ export default function AdminPanel() {
   const [blockEndTime, setBlockEndTime] = useState('');
   const [blockLabel, setBlockLabel] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
 
   const refresh = useCallback(async (message = '') => {
     setNotice(message);
@@ -135,7 +138,6 @@ export default function AdminPanel() {
     } catch (error) {
       const typed = error as Error & { status?: number; data?: ApiError };
       if (typed.status === 401) setAuthState('signin');
-      else if (typed.status === 403) setAuthState('forbidden');
       else if (typed.status === 503 && typed.data?.error === 'admin_not_configured') setAuthState('unconfigured');
       else { setAuthState('error'); setNotice(typed.message); }
     }
@@ -152,6 +154,38 @@ export default function AdminPanel() {
     open: overview?.slots.filter(item => item.status === 'available' && !blockedSlotIds.has(item.id)).length ?? 0,
     holidays: overview?.blackouts.filter(item => item.type === 'holiday').length ?? 0,
   }), [overview, blockedSlotIds]);
+
+  async function signIn(event: FormEvent) {
+    event.preventDefault();
+    setLoginBusy(true);
+    setLoginError('');
+    try {
+      await api<{ authenticated: true }>('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: loginPassword }),
+      });
+      setLoginPassword('');
+      await refresh();
+    } catch (error) {
+      const typed = error as Error & { status?: number; data?: ApiError };
+      if (typed.status === 503 && typed.data?.error === 'admin_not_configured') setAuthState('unconfigured');
+      else setLoginError(typed.message);
+    } finally {
+      setLoginBusy(false);
+    }
+  }
+
+  async function signOut() {
+    try {
+      await api<{ authenticated: false }>('/api/admin/logout', { method: 'POST' });
+    } finally {
+      setOverview(null);
+      setAuthState('signin');
+      setNotice('');
+    }
+  }
+
 
   async function addSlots(event: FormEvent) {
     event.preventDefault();
@@ -215,15 +249,14 @@ export default function AdminPanel() {
   }
 
   if (authState === 'loading') return <main className="admin-page"><div className="admin-auth-card"><p className="eyebrow">SALON ADMIN</p><h1>Opening your dashboard…</h1><p>Checking your secure sign-in.</p></div></main>;
-  if (authState === 'signin') return <main className="admin-page"><div className="admin-auth-card"><p className="eyebrow">SALON ADMIN</p><h1>Manage every<br/><em>appointment.</em></h1><p>Sign in securely to view customer bookings, publish appointment slots, and manage holidays or unavailable times.</p><a className="button" href="/signin-with-chatgpt?return_to=/admin">Sign in to admin panel →</a><a className="text-link" href="/">Return to website</a></div></main>;
-  if (authState === 'forbidden') return <main className="admin-page"><div className="admin-auth-card"><p className="eyebrow">ACCESS RESTRICTED</p><h1>This account is not an administrator.</h1><p>Sign out and use the ChatGPT account approved for the salon.</p><a className="button" href="/signout-with-chatgpt?return_to=/admin">Sign out →</a><a className="text-link" href="/">Return to website</a></div></main>;
-  if (authState === 'unconfigured') return <main className="admin-page"><div className="admin-auth-card"><p className="eyebrow">SETUP REQUIRED</p><h1>Add the salon administrator.</h1><p>The dashboard is protected and ready. Add the administrator’s email to the site’s secure ADMIN_EMAILS setting.</p><a className="text-link" href="/">Return to website</a></div></main>;
+  if (authState === 'signin') return <main className="admin-page"><div className="admin-auth-card"><p className="eyebrow">SALON ADMIN</p><h1>Manage every<br/><em>appointment.</em></h1><p>Enter the salon admin password to manage bookings, appointment slots, holidays and unavailable times.</p><form className="admin-login-form" onSubmit={signIn}><label htmlFor="admin-password">Admin password</label><input id="admin-password" type="password" autoComplete="current-password" required minLength={8} maxLength={256} autoFocus value={loginPassword} onChange={event => setLoginPassword(event.target.value)}/>{loginError && <p className="admin-auth-error" role="alert">{loginError}</p>}<button className="button" type="submit" disabled={loginBusy}>{loginBusy ? 'Signing in...' : 'Sign in'}</button></form><a className="text-link" href="/">Return to website</a></div></main>;
+  if (authState === 'unconfigured') return <main className="admin-page"><div className="admin-auth-card"><p className="eyebrow">SETUP REQUIRED</p><h1>Add the salon password.</h1><p>The dashboard is ready. Add ADMIN_PASSWORD_HASH and ADMIN_SESSION_SECRET to the site's secure runtime settings.</p><a className="text-link" href="/">Return to website</a></div></main>;
   if (authState === 'error' || !overview) return <main className="admin-page"><div className="admin-auth-card"><p className="eyebrow">ADMIN DASHBOARD</p><h1>Unable to load the dashboard.</h1><p>{notice || 'Please try again.'}</p><button className="button" type="button" onClick={() => void refresh()}>Try again</button></div></main>;
 
   return <main className="admin-page">
     <section className="admin-hero">
-      <div><p className="eyebrow">NG AESTHETICS · SALON ADMIN</p><h1>Bookings,<br/><em>beautifully organised.</em></h1><p>Signed in as {overview.admin.email}</p></div>
-      <div className="admin-hero-actions"><a className="button outline" href="/" target="_blank" rel="noopener noreferrer">View customer site ↗</a><a className="text-link" href="/signout-with-chatgpt?return_to=/admin">Sign out</a></div>
+      <div><p className="eyebrow">NG AESTHETICS / SALON ADMIN</p><h1>Bookings,<br/><em>beautifully organised.</em></h1><p>Secure salon session</p></div>
+      <div className="admin-hero-actions"><a className="button outline" href="/" target="_blank" rel="noopener noreferrer">View customer site</a><button className="text-link admin-signout" type="button" onClick={() => void signOut()}>Sign out</button></div>
     </section>
 
     <section className="admin-content">

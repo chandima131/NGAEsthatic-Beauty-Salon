@@ -8,10 +8,17 @@ import {
   type D1DatabaseLike,
   type SlotInput,
 } from '../db/booking-store';
+import {
+  clearAdminSessionCookie,
+  createAdminSessionCookie,
+  isAdminAuthConfigured,
+  verifyAdminPassword,
+  verifyAdminSession,
+  type AdminAuthEnvironment,
+} from './admin-auth';
 
-export type BookingEnvironment = {
+export type BookingEnvironment = AdminAuthEnvironment & {
   DB?: D1DatabaseLike;
-  ADMIN_EMAILS?: string;
 };
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -92,13 +99,39 @@ function methodNotAllowed(methods: string[]) {
   return json({ error: 'Method not allowed.' }, 405, { Allow: methods.join(', ') });
 }
 
-function requireAdmin(request: Request, env: BookingEnvironment): { ok: true; email: string } | { ok: false; response: Response } {
-  const email = request.headers.get('oai-authenticated-user-email')?.trim().toLowerCase();
-  if (!email) return { ok: false, response: json({ error: 'signin_required', signInUrl: '/signin-with-chatgpt?return_to=/admin' }, 401) };
-  const allowed = (env.ADMIN_EMAILS ?? '').split(',').map(value => value.trim().toLowerCase()).filter(Boolean);
-  if (!allowed.length) return { ok: false, response: json({ error: 'admin_not_configured' }, 503) };
-  if (!allowed.includes(email)) return { ok: false, response: json({ error: 'not_authorized', email }, 403) };
-  return { ok: true, email };
+async function requireAdmin(request: Request, env: BookingEnvironment) {
+  const state = await verifyAdminSession(request, env);
+  if (state === 'unconfigured') return json({ error: 'admin_not_configured' }, 503);
+  if (state !== 'authenticated') return json({ error: 'signin_required' }, 401);
+  return null;
+}
+
+const loginAttempts = new Map<string, { failures: number; resetAt: number }>();
+
+function loginKey(request: Request) {
+  return request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'local';
+}
+
+function loginRateLimited(request: Request) {
+  const key = loginKey(request);
+  const entry = loginAttempts.get(key);
+  if (!entry || entry.resetAt <= Date.now()) {
+    loginAttempts.delete(key);
+    return false;
+  }
+  return entry.failures >= 8;
+}
+
+function recordLoginFailure(request: Request) {
+  const key = loginKey(request);
+  const entry = loginAttempts.get(key);
+  loginAttempts.set(key, !entry || entry.resetAt <= Date.now()
+    ? { failures: 1, resetAt: Date.now() + 15 * 60 * 1000 }
+    : { ...entry, failures: entry.failures + 1 });
+}
+
+function clearLoginFailures(request: Request) {
+  loginAttempts.delete(loginKey(request));
 }
 function errorResponse(error: unknown) {
   if (error instanceof SlotUnavailableError) return json({ error: error.message }, 409);
@@ -183,9 +216,30 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
       }, 201);
     }
 
+    if (path === '/api/admin/login') {
+      if (request.method !== 'POST') return methodNotAllowed(['POST']);
+      if (!sameOrigin(request)) return json({ error: 'Cross-site requests are not accepted.' }, 403);
+      if (!isAdminAuthConfigured(env)) return json({ error: 'admin_not_configured' }, 503);
+      if (loginRateLimited(request)) return json({ error: 'Too many sign-in attempts. Try again in 15 minutes.' }, 429, { 'Retry-After': '900' });
+      const input = await body(request);
+      const password = typeof input.password === 'string' ? input.password : '';
+      if (!(await verifyAdminPassword(password, env.ADMIN_PASSWORD_HASH))) {
+        recordLoginFailure(request);
+        return json({ error: 'Incorrect password.' }, 401);
+      }
+      clearLoginFailures(request);
+      return json({ authenticated: true }, 200, { 'Set-Cookie': await createAdminSessionCookie(request, env) });
+    }
+
+    if (path === '/api/admin/logout') {
+      if (request.method !== 'POST') return methodNotAllowed(['POST']);
+      if (!sameOrigin(request)) return json({ error: 'Cross-site requests are not accepted.' }, 403);
+      return json({ authenticated: false }, 200, { 'Set-Cookie': clearAdminSessionCookie(request) });
+    }
+
     if (path.startsWith('/api/admin/')) {
-      const admin = requireAdmin(request, env);
-      if (!admin.ok) return admin.response;
+      const adminError = await requireAdmin(request, env);
+      if (adminError) return adminError;
 
       if (path === '/api/admin/overview') {
         if (request.method !== 'GET') return methodNotAllowed(['GET']);
@@ -194,7 +248,7 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
         defaultToDate.setUTCFullYear(defaultToDate.getUTCFullYear() + 1);
         const range = validRange(url.searchParams.get('from') ?? defaultFrom, url.searchParams.get('to') ?? defaultToDate.toISOString().slice(0, 10));
         if (!range) return json({ error: 'Use valid from and to dates.' }, 400);
-        return json({ admin: { email: admin.email }, ...(await store.getOverview(range.from, range.to)) });
+        return json({ admin: { authenticated: true }, ...(await store.getOverview(range.from, range.to)) });
       }
 
       if (path === '/api/admin/slots') {

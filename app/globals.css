@@ -352,6 +352,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .admin-auth-card h1{max-width:800px}
 .admin-auth-card>p:not(.eyebrow){max-width:600px;margin:24px auto}
 .admin-auth-card .button{margin:10px 0 15px}
+.admin-login-form{display:flex;width:min(100%,390px);flex-direction:column;align-items:stretch;margin:2px auto 22px;text-align:left}
+.admin-login-form label{margin-bottom:7px;color:var(--rose-7);font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.admin-login-form input{width:100%;min-height:54px;padding:12px 15px;border:1px solid #CE9CAE;border-radius:5px;background:#fff;color:var(--ink);font-size:16px;box-shadow:0 9px 25px #6919360b}
+.admin-login-form input:focus{outline:3px solid #ec9eb866;border-color:var(--rose-4)}
+.admin-login-form .button{width:100%;margin:14px 0 0}
+.admin-login-form .button:disabled{opacity:.55;cursor:wait}
+.admin-auth-error{margin:10px 0 0!important;color:#9B3548!important;font-size:10px!important;text-align:left}
+.admin-signout{border-width:0 0 1px;background:transparent;font:inherit;cursor:pointer}
 .admin-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;padding:64px max(6%,calc((100vw - 1440px)/2 + 6%));background:linear-gradient(125deg,var(--rose-7),var(--rose-5));color:#fff}
 .admin-hero h1{color:#fff}
 .admin-hero h1 em{color:var(--rose-1)}

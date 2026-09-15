@@ -27,10 +27,20 @@ npm run db:generate
 
 - D1 stores appointment slots, unavailable periods, holidays and customer bookings.
 - Customers can view live monthly availability and submit a pending appointment request.
-- /admin uses ChatGPT sign-in. The server checks the signed-in email against ADMIN_EMAILS for every admin API request.
+- /admin uses a password form and a signed, HTTP-only 12-hour session cookie. No email is required.
 - Admins can add day schedules, remove slots, block hours or dates, add holidays, confirm, complete, cancel, reschedule or delete bookings, and keep private notes.
-- Configure ADMIN_EMAILS as a comma-separated runtime value. Never expose it in client code.
+- Store ADMIN_PASSWORD_HASH and ADMIN_SESSION_SECRET only in server runtime settings. Neither value is exposed to browser code.
 - Customer details remain in protected admin responses and are never returned by the public availability API.
+
+Create a new password hash and session secret in PowerShell:
+
+~~~powershell
+$env:NEW_ADMIN_PASSWORD='choose-a-private-password'
+npm run admin:hash
+npm run admin:secret
+~~~
+
+Copy the two command outputs into ADMIN_PASSWORD_HASH and ADMIN_SESSION_SECRET. Changing the password hash immediately invalidates the old password; rotating the session secret also signs out existing admin sessions.
 
 The old public page URLs permanently redirect to the matching homepage section. The admin route is excluded from search indexing and the sitemap.
 

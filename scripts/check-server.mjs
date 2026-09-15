@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
+import { pbkdf2Sync } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
 
-const environment = { ...process.env, HOST: '127.0.0.1', PORT: '0', ADMIN_EMAILS: 'admin@example.test' };
+const testPassword = 'local-test-password';
+const testSalt = Buffer.alloc(16, 7);
+const testDigest = pbkdf2Sync(testPassword, testSalt, 310_000, 32, 'sha256');
+const testPasswordHash = ['pbkdf2-sha256', 310_000, testSalt.toString('base64url'), testDigest.toString('base64url')].join('$');
+const testSessionSecret = 'local-test-session-secret-with-32-characters';
+const environment = { ...process.env, HOST: '127.0.0.1', PORT: '0', ADMIN_PASSWORD_HASH: testPasswordHash, ADMIN_SESSION_SECRET: testSessionSecret };
 const child = spawn(process.execPath, ['dist/node.mjs'], { env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
 let log = '';
 child.stdout.on('data', chunk => { log += chunk; });
@@ -32,7 +38,7 @@ try {
   const client = await fetch(origin + script);
   assert.match(client.headers.get('content-type'), /javascript/);
   const clientCode = await client.text();
-  assert.ok(!clientCode.includes('GOOGLE_MAPS_API_KEY') && !clientCode.includes('admin@example.test'));
+  assert.ok(!clientCode.includes('GOOGLE_MAPS_API_KEY') && !clientCode.includes(testPasswordHash) && !clientCode.includes(testSessionSecret));
   assert.match(client.headers.get('cache-control'), /immutable/);
 
   for (const path of ['/server/node.mjs', '/.env.local', '/package.json', '/assets/../../server/node.mjs', '/api/missing']) assert.equal((await fetch(origin + path)).status, 404, path);
@@ -49,15 +55,30 @@ try {
   assert.match(await adminPage.text(), /noindex, nofollow/);
   const anonymousAdmin = await fetch(origin + '/api/admin/overview');
   assert.equal(anonymousAdmin.status, 401);
-  const wrongAdmin = await fetch(origin + '/api/admin/overview', { headers: { 'oai-authenticated-user-email': 'wrong@example.test' } });
-  assert.equal(wrongAdmin.status, 403);
+  let response = await fetch(origin + '/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin },
+    body: JSON.stringify({ password: 'wrong-password' }),
+  });
+  assert.equal(response.status, 401);
+  response = await fetch(origin + '/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin },
+    body: JSON.stringify({ password: testPassword }),
+  });
+  assert.equal(response.status, 200);
+  const setCookie = response.headers.get('set-cookie');
+  assert.match(setCookie, /^ng_admin_session=/);
+  assert.match(setCookie, /HttpOnly/);
+  assert.match(setCookie, /SameSite=Strict/);
+  const adminCookie = setCookie.split(';')[0];
 
   const target = new Date();
   target.setDate(target.getDate() + 3);
   const date = isoDate(target);
   const month = date.slice(0, 7);
-  const adminHeaders = { 'Content-Type': 'application/json', 'oai-authenticated-user-email': 'admin@example.test', Origin: origin };
-  let response = await fetch(origin + '/api/admin/slots', { method: 'POST', headers: adminHeaders, body: JSON.stringify({ date, startTime: '10:00', endTime: '12:00', durationMinutes: 60 }) });
+  const adminHeaders = { 'Content-Type': 'application/json', Cookie: adminCookie, Origin: origin };
+  response = await fetch(origin + '/api/admin/slots', { method: 'POST', headers: adminHeaders, body: JSON.stringify({ date, startTime: '10:00', endTime: '12:00', durationMinutes: 60 }) });
   assert.equal(response.status, 201);
   assert.equal((await response.json()).count, 2);
 
@@ -110,6 +131,11 @@ try {
     assert.equal(deleted.status, 200);
   }
 
+  response = await fetch(origin + '/api/admin/logout', { method: 'POST', headers: adminHeaders });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('set-cookie'), /Max-Age=0/);
+  assert.equal((await fetch(origin + '/api/admin/overview')).status, 401);
+
   const reviews = await fetch(origin + '/api/google-reviews');
   assert.equal(reviews.status, 404);
   assert.deepEqual(await reviews.json(), { error: 'Not found' });
@@ -122,10 +148,10 @@ try {
   for (const name of await readdir('dist/client/assets')) {
     if (name.endsWith('.js')) {
       const source = await readFile('dist/client/assets/' + name, 'utf8');
-      assert.ok(!source.includes('GOOGLE_MAPS_API_KEY') && !source.includes('admin@example.test'));
+      assert.ok(!source.includes('GOOGLE_MAPS_API_KEY') && !source.includes(testPasswordHash) && !source.includes(testSessionSecret));
     }
   }
-  console.log('PASS: production server, customer booking flow, protected admin controls, availability, holidays, assets, and secret isolation.');
+  console.log('PASS: production server, customer booking flow, password-protected admin controls, session logout, availability, holidays, assets, and secret isolation.');
 } finally {
   child.kill();
 }

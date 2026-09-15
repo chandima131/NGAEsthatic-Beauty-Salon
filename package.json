@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node scripts/check-server.mjs && node scripts/check-worker.mjs",
     "test:site": "node --experimental-strip-types scripts/check-site.mjs",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "admin:hash": "node scripts/hash-admin-password.mjs",
+    "admin:secret": "node scripts/create-admin-secret.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

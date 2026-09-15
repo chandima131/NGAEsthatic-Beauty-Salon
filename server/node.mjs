@@ -43,7 +43,10 @@ async function serve(req, res) {
     const handler = dev ? await vite.ssrLoadModule('/server/handler.tsx') : production;
     const html = dev ? await vite.transformIndexHtml(url.pathname, await readFile(resolve(root, 'index.html'), 'utf8')) : template;
     const request = await toRequest(req, url);
-    const response = await handler.handleRequest(request, html, { ADMIN_EMAILS: process.env.ADMIN_EMAILS });
+    const response = await handler.handleRequest(request, html, {
+      ADMIN_PASSWORD_HASH: process.env.ADMIN_PASSWORD_HASH,
+      ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
+    });
     if (response) {
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(req.method === 'HEAD' ? undefined : Buffer.from(await response.arrayBuffer()));
