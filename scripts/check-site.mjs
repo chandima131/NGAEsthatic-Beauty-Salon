@@ -21,8 +21,8 @@ const response = await fetch(origin);
 assert.equal(response.status, 200);
 const html = await response.text();
 assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, 'Homepage needs one H1');
-for (const id of ['home','about','services','gallery','location','reviews','contact','privacy']) assert.match(html, new RegExp(`id="${id}"`), `Missing #${id}`);
-const ordered = ['id="home"','id="about"','id="services"','id="gallery"','id="location"','id="reviews"','id="contact"'];
+for (const id of ['home','about','services','booking','gallery','location','reviews','contact','privacy']) assert.match(html, new RegExp('id="' + id + '"'), 'Missing #' + id);
+const ordered = ['id="home"','id="about"','id="services"','id="booking"','id="gallery"','id="location"','id="reviews"','id="contact"'];
 for (let index = 1; index < ordered.length; index++) assert.ok(html.indexOf(ordered[index]) > html.indexOf(ordered[index - 1]), `Section order: ${ordered[index]}`);
 for (const field of ['og:title','og:description','og:image','twitter:card','twitter:title','twitter:description','twitter:image']) assert.ok(html.includes(`"${field}"`), field);
 assert.match(html, /<link(?=[^>]*rel="canonical")(?=[^>]*href="https:\/\/ng-aesthetics-beauty-lab\.chandi131\.chatgpt\.site\/")[^>]*>/);
@@ -37,7 +37,7 @@ for (const category of categories) {
   assert.ok(html.includes(`id="prices-${category.slug}"`));
   for (const treatment of category.treatments) {
     assert.ok(html.includes(treatment.name.replaceAll('&','&amp;')), treatment.name);
-    assert.ok(html.includes(`£${treatment.price}`), `${treatment.name} price`);
+    assert.ok(html.includes(String.fromCharCode(163) + treatment.price), treatment.name + ' price');
   }
 }
 for (const match of html.matchAll(/<img\b[^>]*>/g)) {
@@ -52,7 +52,7 @@ for (const [, href] of html.matchAll(/<a\b[^>]*href="([^"]+)"/g)) {
   if (href.startsWith('tel:')) assert.equal(href, 'tel:+447801247820');
   if (href.startsWith('https://wa.me/')) assert.ok(href.startsWith('https://wa.me/447801247820?text='));
 }
-assert.ok(!/lorem ipsum|â€™|â†|âœ|Â£|�/i.test(html), 'Placeholder or encoding issue');
+assert.ok(!/lorem ipsum|ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢|ÃƒÂ¢Ã¢â‚¬Â |ÃƒÂ¢Ã…â€œ|Ãƒâ€šÃ‚Â£|Ã¯Â¿Â½/i.test(html), 'Placeholder or encoding issue');
 const redirects = {'/about':'/#about','/treatments':'/#services','/prices':'/#services','/gallery':'/#gallery','/contact':'/#contact','/privacy':'/#privacy','/treatments/facials':'/#services'};
 for (const [path, location] of Object.entries(redirects)) {
   const redirect = await fetch(origin + path, { redirect: 'manual' });
@@ -62,6 +62,12 @@ for (const [path, location] of Object.entries(redirects)) {
 const sitemap = await (await fetch(origin + '/sitemap.xml')).text();
 assert.equal((sitemap.match(/<url>/g) || []).length, 1);
 assert.ok(sitemap.includes('https://ng-aesthetics-beauty-lab.chandi131.chatgpt.site/'));
+const admin = await fetch(origin + '/admin');
+assert.equal(admin.status, 200);
+assert.match(await admin.text(), /noindex, nofollow/);
+const robotsText = await (await fetch(origin + '/robots.txt')).text();
+assert.match(robotsText, /Disallow: \/admin/);
+assert.match(robotsText, /Disallow: \/api\//);
 assert.equal((await fetch(origin + '/missing-page')).status, 404);
 const css = await readFile('app/globals.css','utf8');
 for (const colour of ['#EC9EB8','#DC7097','#D53B70','#B92A58','#8B2257','#691936','#46121F']) assert.ok(css.includes(colour), colour);
@@ -70,6 +76,6 @@ assert.match(css,/:focus-visible/);
 for (const dir of ['app','components','lib']) for (const path of await readdir(dir,{recursive:true})) {
   if (!/\.(tsx?|css)$/.test(path)) continue;
   const source = await readFile(`${dir}/${path}`,'utf8');
-  assert.ok(!/â€™|â†|âœ|Â£|�/.test(source), `Encoding ${dir}/${path}`);
+  assert.ok(!/ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢|ÃƒÂ¢Ã¢â‚¬Â |ÃƒÂ¢Ã…â€œ|Ãƒâ€šÃ‚Â£|Ã¯Â¿Â½/.test(source), `Encoding ${dir}/${path}`);
 }
 console.log('PASS: one page, ordered sections, 38 supplied prices, anchors, redirects, metadata, schema, sitemap, assets and pink palette.');

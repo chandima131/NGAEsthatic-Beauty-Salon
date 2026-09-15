@@ -4,24 +4,28 @@ import { categories, priceDisclaimer, type Category } from '../lib/services';
 
 export function Photo({ name, alt, priority = false }: { name: string; alt: string; priority?: boolean }) {
   return <picture>
-    <source srcSet={`/images/${name}-640.webp 640w, /images/${name}.webp 1280w`} sizes="(max-width: 700px) 92vw, 50vw" type="image/webp"/>
-    <img src={`/images/${name}.webp`} alt={alt} width={name === 'hero-beauty-salon' ? 1280 : 1024} height={name === 'hero-beauty-salon' ? 853 : 1536} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'}/>
+    <source srcSet={'/images/' + name + '-640.webp 640w, /images/' + name + '.webp 1280w'} sizes="(max-width: 700px) 92vw, 50vw" type="image/webp"/>
+    <img src={'/images/' + name + '.webp'} alt={alt} width={name === 'hero-beauty-salon' ? 1280 : 1024} height={name === 'hero-beauty-salon' ? 853 : 1536} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'}/>
   </picture>;
 }
 
 export function SectionHeading({ eyebrow, title, copy, light = false }: { eyebrow: string; title: ReactNode; copy?: string; light?: boolean }) {
-  return <div className={`section-heading${light ? ' light' : ''}`}><p className="eyebrow">{eyebrow}</p><h2>{title}</h2>{copy && <p>{copy}</p>}</div>;
+  return <div className={'section-heading' + (light ? ' light' : '')}><p className="eyebrow">{eyebrow}</p><h2>{title}</h2>{copy && <p>{copy}</p>}</div>;
+}
+
+function bookingLink(treatment: string) {
+  return '/?service=' + encodeURIComponent(treatment) + '#booking';
 }
 
 function CategoryPrices({ category, index }: { category: Category; index: number }) {
-  return <details className="price-category" open={index < 2} id={`prices-${category.slug}`}>
+  return <details className="price-category" open={index < 2} id={'prices-' + category.slug}>
     <summary><span><small>{String(index + 1).padStart(2, '0')}</small>{category.slug === 'beauty-treatments' ? 'Brows & Lashes' : category.name}</span><span className="summary-mark" aria-hidden="true">+</span></summary>
     <div className="category-content">
       <p className="category-intro">{category.description}</p>
       <div className="compact-price-list">
         {category.treatments.map(treatment => <div className="compact-price" key={treatment.name}>
           <span>{treatment.name}</span><i aria-hidden="true"/><strong>£{treatment.price}</strong>
-          <a href={bookingUrl(`${category.name}: ${treatment.name}`)} aria-label={`Enquire about ${treatment.name}, £${treatment.price}`}>Book</a>
+          <a href={bookingLink(treatment.name)} aria-label={'Book ' + treatment.name + ', £' + treatment.price}>Book</a>
         </div>)}
       </div>
       {category.note && <p className="category-note">{category.note}</p>}
@@ -32,7 +36,7 @@ function CategoryPrices({ category, index }: { category: Category; index: number
 export function PriceDirectory() {
   return <>
     <div className="service-links" aria-label="Jump to a treatment category">
-      {categories.map(category => <a key={category.slug} href={`#prices-${category.slug}`}>{category.name}</a>)}
+      {categories.map(category => <a key={category.slug} href={'#prices-' + category.slug}>{category.name}</a>)}
     </div>
     <div className="price-directory">{categories.map((category, index) => <CategoryPrices key={category.slug} category={category} index={index}/>)}</div>
     <p className="price-disclaimer">{priceDisclaimer}</p>
@@ -40,19 +44,19 @@ export function PriceDirectory() {
 }
 
 export function Footer() {
-  const footerLinks = [['Home','#home'],['About','#about'],['Services & Prices','#services'],['Gallery','#gallery'],['Reviews','#reviews'],['Contact','#contact']];
+  const footerLinks = [['Home','/#home'],['About','/#about'],['Services & Prices','/#services'],['Book online','/#booking'],['Gallery','/#gallery'],['Reviews','/#reviews'],['Contact','/#contact']];
   return <><footer className="footer">
-    <div className="footer-lead"><p>YOUR TIME. YOUR BEAUTY.</p><h2>Ready for your<br/><em>next appointment?</em></h2><a className="button button-pale" href={bookingUrl()}>Book on WhatsApp <span aria-hidden="true">↗</span></a></div>
+    <div className="footer-lead"><p>YOUR TIME. YOUR BEAUTY.</p><h2>Ready for your<br/><em>next appointment?</em></h2><a className="button button-pale" href="/#booking">Book online <span aria-hidden="true">→</span></a></div>
     <div className="footer-grid">
-      <div className="footer-brand"><a href="#home" className="brand"><img src="/images/logo.jpg" width="68" height="68" alt="NG Aesthetics & Beauty Lab logo"/><span>NG Aesthetics<small>& BEAUTY LAB</small></span></a><p>Beauty and aesthetic treatments in Hattersley, Hyde.</p></div>
+      <div className="footer-brand"><a href="/" className="brand"><img src="/images/logo.jpg" width="68" height="68" alt="NG Aesthetics & Beauty Lab logo"/><span>NG Aesthetics<small>& BEAUTY LAB</small></span></a><p>Beauty and aesthetic treatments in Hattersley, Hyde.</p></div>
       <div><h3>Explore</h3><nav className="footer-links" aria-label="Footer navigation">{footerLinks.map(([name,url]) => <a href={url} key={url}>{name}</a>)}</nav></div>
       <div><h3>Visit us</h3><address>Sgt Mark Stansfield Way<br/>Hattersley, Hyde<br/>SK14 3FX, United Kingdom</address><a href={business.mapsUrl} target="_blank" rel="noopener noreferrer">Open Google Maps ↗</a></div>
-      <div><h3>Let’s connect</h3><a className="footer-phone" href={business.telephone}>{business.phone}</a><a href={business.instagram} target="_blank" rel="noopener noreferrer">{business.instagramHandle} ↗</a></div>
+      <div><h3>Let’s connect</h3><a className="footer-phone" href={business.telephone}>{business.phone}</a><a href={business.instagram} target="_blank" rel="noopener noreferrer">{business.instagramHandle} ↗</a><a className="admin-link" href="/admin">Salon admin</a></div>
     </div>
     <div className="footer-info" id="privacy">
-      <details><summary>Privacy</summary><p>The enquiry form prepares a WhatsApp message on your device and does not store it in a website database. Please do not include medical or sensitive information. WhatsApp, Instagram and Google Maps follow their own privacy policies.</p></details>
-      <details><summary>Cookies</summary><p>No optional analytics or advertising tools are enabled. Google Maps is embedded in the location section and may set its own cookies. Essential hosting features may use technical cookies.</p></details>
-      <details><summary>Website terms</summary><p>Sending an enquiry does not confirm an appointment. Treatment availability and prices may change; contact the salon to confirm. Website descriptions do not promise treatment outcomes.</p></details>
+      <details><summary>Privacy</summary><p>Booking requests and contact details are stored securely so the salon can manage your appointment. The salon uses them only to arrange and administer your booking. Please do not include medical or sensitive information. WhatsApp, Instagram and Google Maps follow their own privacy policies.</p></details>
+      <details><summary>Cookies</summary><p>No optional analytics or advertising tools are enabled. Google Maps is embedded in the location section and may set its own cookies. Secure sign-in and essential hosting features may use technical cookies.</p></details>
+      <details><summary>Website terms</summary><p>An online request does not confirm an appointment. The salon will contact you to confirm. Treatment availability and prices may change; website descriptions do not promise treatment outcomes.</p></details>
     </div>
     <div className="footer-bottom"><p>© {new Date().getFullYear()} {business.name}. All rights reserved.</p><p>Made with care for beauty lovers in Hyde.</p></div>
     <div className="shade-strip" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/></div>

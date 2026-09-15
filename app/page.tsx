@@ -2,6 +2,7 @@ import GalleryGrid from '../components/GalleryGrid';
 import GoogleReviews from '../components/GoogleReviews';
 import LocationSection from '../components/LocationSection';
 import ContactForm from '../components/ContactForm';
+import BookingCalendar from '../components/BookingCalendar';
 import { bookingUrl, business } from '../lib/business';
 import { Photo, PriceDirectory, SectionHeading } from '../components/Site';
 
@@ -13,7 +14,7 @@ export default function Home() {
         <h1 id="hero-title">Beauty & Aesthetic<br/>Treatments in <em>Hyde.</em></h1>
         <p className="lead">A little time for you.<br/>A beautiful feeling that stays.</p>
         <p>Professional beauty and aesthetic treatments, personalised to you in our welcoming space in Hattersley, Hyde.</p>
-        <div className="actions"><a className="button" href={bookingUrl()}>Book your appointment <span aria-hidden="true">↗</span></a><a className="button outline" href="#services">View services & prices</a></div>
+        <div className="actions"><a className="button" href="/#booking">Book your appointment <span aria-hidden="true">↗</span></a><a className="button outline" href="#services">View services & prices</a></div>
         <div className="hero-trust"><span>Facials</span><i>•</i><span>Skin</span><i>•</i><span>Beauty</span><i>•</i><span>Makeup</span></div>
       </div>
       <div className="hero-photo">
@@ -46,6 +47,8 @@ export default function Home() {
         <PriceDirectory/>
       </div>
     </section>
+
+    <BookingCalendar/>
 
     <section className="gallery-section section" id="gallery" aria-labelledby="gallery-title">
       <div className="split-heading"><SectionHeading eyebrow="OUR WORK" title={<>Real treatments.<br/><em>Beautiful details.</em></>} copy="A closer look at brows, beauty and skin treatments at NG Aesthetics & Beauty Lab."/><a className="text-link" href={business.instagram} target="_blank" rel="noopener noreferrer">Follow on Instagram <span aria-hidden="true">↗</span></a></div>

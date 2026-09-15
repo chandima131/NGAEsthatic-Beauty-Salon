@@ -4,7 +4,7 @@ import { seo } from '../lib/seo';
 
 export const metadata = seo(
   'NG Aesthetics & Beauty Lab | Beauty Treatments Hyde',
-  'Discover facials, skin treatments, makeup, waxing and threading at NG Aesthetics & Beauty Lab in Hattersley, Hyde. View prices and book by WhatsApp.',
+  'Discover beauty and aesthetic treatments in Hattersley, Hyde. View prices, see live appointment availability and request your booking online.',
   '/',
 );
 

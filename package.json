@@ -12,9 +12,11 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/check-server.mjs && node scripts/check-worker.mjs",
-    "test:site": "node --experimental-strip-types scripts/check-site.mjs"
+    "test:site": "node --experimental-strip-types scripts/check-site.mjs",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -26,6 +28,7 @@
     "@typescript-eslint/eslint-plugin": "8.70.0",
     "@typescript-eslint/parser": "8.70.0",
     "@vitejs/plugin-react": "6.0.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "9.39.4",
     "eslint-plugin-react-hooks": "7.1.1",
     "typescript": "5.9.3",
