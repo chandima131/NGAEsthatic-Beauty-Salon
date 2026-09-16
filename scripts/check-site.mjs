@@ -27,6 +27,9 @@ assert.match(html, /class="page-loader-logo"[^>]+\/images\/logo\.jpg/, 'Loader s
 assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, 'Homepage needs one H1');
 assert.ok(!html.includes('SEND AN ENQUIRY'), 'Duplicate contact enquiry form should not appear');
 for (const className of ['floral-top-left','floral-right','floral-bottom','gold-curve']) assert.ok(html.includes('class="' + className + '"'), 'Missing floral decoration: ' + className);
+assert.match(html, /class="contact-head"/);
+assert.match(html, /class="footer-hours"/);
+assert.match(html, /OPEN DAILY/);
 for (const id of ['home','about','services','booking','gallery','location','reviews','contact','privacy']) assert.match(html, new RegExp('id="' + id + '"'), 'Missing #' + id);
 const ordered = ['id="home"','id="about"','id="services"','id="booking"','id="gallery"','id="location"','id="reviews"','id="contact"'];
 for (let index = 1; index < ordered.length; index++) assert.ok(html.indexOf(ordered[index]) > html.indexOf(ordered[index - 1]), `Section order: ${ordered[index]}`);
@@ -88,6 +91,10 @@ const floralSource = await readFile('components/FloralDecor.tsx','utf8');
 for (const colour of ['#EC9EB8','#DC7097','#D53B70','#B92A58','#8B2257','#691936','#46121F','#FFF8F8','#FCEAEC','#F6CCD6','#E9A7B6','#C85A78','#B98A77','#70836B']) assert.ok(css.includes(colour) || floralSource.includes(colour), colour);
 for (const className of ['floral-top-left','floral-right','floral-bottom','gold-curve']) assert.match(css, new RegExp('\\.' + className + '\\{'));
 assert.match(css, /\.floral-decor svg\{[^}]*position:absolute[^}]*pointer-events:none/);
+assert.match(css,/\.contact-section\{[^}]*#FFF8F8/);
+assert.match(css,/\.footer\{[^}]*#F6CCD6/);
+assert.ok(!/\.contact-section\{[^}]*background:var\(--rose-5\)/.test(css));
+assert.ok(!/\.footer\{[^}]*background:var\(--rose-7\)/.test(css));
 assert.match(css,/prefers-reduced-motion/);
 assert.match(css,/:focus-visible/);
 for (const dir of ['app','components','lib']) for (const path of await readdir(dir,{recursive:true})) {

@@ -63,16 +63,25 @@ export default function Home() {
     <section className="contact-section" id="contact" aria-labelledby="contact-title">
       <div className="section contact-layout">
         <div className="contact-copy">
-          <p className="eyebrow">CONTACT US</p>
-          <h2 id="contact-title">Your next beauty moment<br/><em>starts here.</em></h2>
-          <p>Ask about a treatment, tell us your preferred date, or call for a friendly conversation before you book.</p>
-          <div className="contact-cards">
-            <a href={business.telephone}><small>CALL US</small><strong>{business.phone}</strong><span aria-hidden="true">↗</span></a>
-            <a href={bookingUrl()}><small>MESSAGE US</small><strong>Chat on WhatsApp</strong><span aria-hidden="true">↗</span></a>
-            <a href={business.instagram} target="_blank" rel="noopener noreferrer"><small>FOLLOW US</small><strong>{business.instagramHandle}</strong><span aria-hidden="true">↗</span></a>
+          <div className="contact-head">
+            <div>
+              <p className="eyebrow">CONTACT US</p>
+              <h2 id="contact-title">Your next beauty moment<br/><em>starts here.</em></h2>
+            </div>
+            <div className="contact-intro">
+              <p>Ask about a treatment, tell us your preferred date, or call for a friendly conversation before you book.</p>
+              <a className="text-link" href="#booking">View live availability <span aria-hidden="true">&rarr;</span></a>
+            </div>
           </div>
-          <address><strong>Visit NG Aesthetics & Beauty Lab</strong><br/>Sgt Mark Stansfield Way<br/>Hattersley, Hyde · SK14 3FX<br/>United Kingdom</address>
-          <p className="contact-fineprint">Please contact us to confirm treatment suitability, availability and visiting times.</p>
+          <div className="contact-cards">
+            <a href={business.telephone}><small>CALL US</small><strong>{business.phone}</strong><span aria-hidden="true">&rarr;</span></a>
+            <a href={bookingUrl()}><small>MESSAGE US</small><strong>Chat on WhatsApp</strong><span aria-hidden="true">&rarr;</span></a>
+            <a href={business.instagram} target="_blank" rel="noopener noreferrer"><small>FOLLOW US</small><strong>{business.instagramHandle}</strong><span aria-hidden="true">&rarr;</span></a>
+          </div>
+          <div className="contact-visit">
+            <address><small>VISIT THE SALON</small><strong>NG Aesthetics &amp; Beauty Lab</strong><br/>Sgt Mark Stansfield Way, Hattersley<br/>Hyde &middot; SK14 3FX &middot; United Kingdom</address>
+            <p className="contact-fineprint">Open daily, 10:00&ndash;22:00. Please contact us to confirm treatment suitability and your appointment time.</p>
+          </div>
         </div>
       </div>
     </section>

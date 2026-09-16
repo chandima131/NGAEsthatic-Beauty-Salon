@@ -46,19 +46,22 @@ export function PriceDirectory() {
 export function Footer() {
   const footerLinks = [['Home','/#home'],['About','/#about'],['Services & Prices','/#services'],['Book online','/#booking'],['Gallery','/#gallery'],['Reviews','/#reviews'],['Contact','/#contact']];
   return <><footer className="footer">
-    <div className="footer-lead"><p>YOUR TIME. YOUR BEAUTY.</p><h2>Ready for your<br/><em>next appointment?</em></h2><a className="button button-pale" href="/#booking">Book online <span aria-hidden="true">→</span></a></div>
+    <div className="footer-lead">
+      <div><p className="footer-kicker">YOUR TIME. YOUR BEAUTY.</p><h2>Ready for your<br/><em>next appointment?</em></h2></div>
+      <div className="footer-lead-action"><p>Appointments are available every day from 10am to 10pm.</p><a className="button button-pale" href="/#booking">Book your appointment <span aria-hidden="true">&rarr;</span></a></div>
+    </div>
     <div className="footer-grid">
-      <div className="footer-brand"><a href="/" className="brand"><img src="/images/logo.jpg" width="68" height="68" alt="NG Aesthetics & Beauty Lab logo"/><span>NG Aesthetics<small>& BEAUTY LAB</small></span></a><p>Beauty and aesthetic treatments in Hattersley, Hyde.</p></div>
+      <div className="footer-brand"><a href="/" className="brand"><img src="/images/logo.jpg" width="68" height="68" alt="NG Aesthetics & Beauty Lab logo"/><span>NG Aesthetics<small>&amp; BEAUTY LAB</small></span></a><p>Professional beauty, skin and aesthetic treatments in Hattersley, Hyde.</p></div>
       <div><h3>Explore</h3><nav className="footer-links" aria-label="Footer navigation">{footerLinks.map(([name,url]) => <a href={url} key={url}>{name}</a>)}</nav></div>
-      <div><h3>Visit us</h3><address>Sgt Mark Stansfield Way<br/>Hattersley, Hyde<br/>SK14 3FX, United Kingdom</address><a href={business.mapsUrl} target="_blank" rel="noopener noreferrer">Open Google Maps ↗</a></div>
-      <div><h3>Let’s connect</h3><a className="footer-phone" href={business.telephone}>{business.phone}</a><a href={business.instagram} target="_blank" rel="noopener noreferrer">{business.instagramHandle} ↗</a><a className="admin-link" href="/admin">Salon admin</a></div>
+      <div><h3>Visit &amp; opening hours</h3><address>Sgt Mark Stansfield Way<br/>Hattersley, Hyde<br/>SK14 3FX, United Kingdom</address><p className="footer-hours"><span>OPEN DAILY</span><strong>10:00&ndash;22:00</strong></p><a href={business.mapsUrl} target="_blank" rel="noopener noreferrer">Open Google Maps &rarr;</a></div>
+      <div><h3>Contact</h3><a className="footer-phone" href={business.telephone}>{business.phone}</a><a href={bookingUrl()}>Message on WhatsApp &rarr;</a><a href={business.instagram} target="_blank" rel="noopener noreferrer">{business.instagramHandle} &rarr;</a><a className="admin-link" href="/admin">Salon admin</a></div>
     </div>
     <div className="footer-info" id="privacy">
       <details><summary>Privacy</summary><p>Booking requests and contact details are stored securely so the salon can manage your appointment. The salon uses them only to arrange and administer your booking. Please do not include medical or sensitive information. WhatsApp, Instagram and Google Maps follow their own privacy policies.</p></details>
       <details><summary>Cookies</summary><p>No optional analytics or advertising tools are enabled. Google Maps is embedded in the location section and may set its own cookies. Secure sign-in and essential hosting features may use technical cookies.</p></details>
       <details><summary>Website terms</summary><p>An online request does not confirm an appointment. The salon will contact you to confirm. Treatment availability and prices may change; website descriptions do not promise treatment outcomes.</p></details>
     </div>
-    <div className="footer-bottom"><p>© {new Date().getFullYear()} {business.name}. All rights reserved.</p><p>Made with care for beauty lovers in Hyde.</p></div>
+    <div className="footer-bottom"><p>&copy; {new Date().getFullYear()} {business.name}. All rights reserved.</p><p>Made with care for beauty lovers in Hyde.</p></div>
     <div className="shade-strip" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/></div>
   </footer>
   <a className="whatsapp-float" href={bookingUrl()} aria-label="Enquire on WhatsApp"><img src="/images/whatsapp.svg" alt="" width="22" height="22"/><span>WhatsApp</span></a></>;
