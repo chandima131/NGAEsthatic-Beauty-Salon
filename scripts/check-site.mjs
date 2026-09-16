@@ -23,6 +23,7 @@ const response = await fetch(origin);
 assert.equal(response.status, 200);
 const html = await response.text();
 assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, 'Homepage needs one H1');
+assert.ok(!html.includes('SEND AN ENQUIRY'), 'Duplicate contact enquiry form should not appear');
 for (const id of ['home','about','services','booking','gallery','location','reviews','contact','privacy']) assert.match(html, new RegExp('id="' + id + '"'), 'Missing #' + id);
 const ordered = ['id="home"','id="about"','id="services"','id="booking"','id="gallery"','id="location"','id="reviews"','id="contact"'];
 for (let index = 1; index < ordered.length; index++) assert.ok(html.indexOf(ordered[index]) > html.indexOf(ordered[index - 1]), `Section order: ${ordered[index]}`);

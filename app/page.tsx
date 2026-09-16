@@ -1,7 +1,6 @@
 import GalleryGrid from '../components/GalleryGrid';
 import GoogleReviews from '../components/GoogleReviews';
 import LocationSection from '../components/LocationSection';
-import ContactForm from '../components/ContactForm';
 import BookingCalendar from '../components/BookingCalendar';
 import { bookingUrl, business } from '../lib/business';
 import { Photo, PriceDirectory, SectionHeading } from '../components/Site';
@@ -73,7 +72,6 @@ export default function Home() {
           <address><strong>Visit NG Aesthetics & Beauty Lab</strong><br/>Sgt Mark Stansfield Way<br/>Hattersley, Hyde · SK14 3FX<br/>United Kingdom</address>
           <p className="contact-fineprint">Please contact us to confirm treatment suitability, availability and visiting times.</p>
         </div>
-        <ContactForm/>
       </div>
     </section>
   </main>;
