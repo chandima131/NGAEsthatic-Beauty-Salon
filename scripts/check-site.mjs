@@ -22,6 +22,8 @@ assert.ok(treatments.every(treatment => treatment.durationMinutes >= 15 && treat
 const response = await fetch(origin);
 assert.equal(response.status, 200);
 const html = await response.text();
+assert.match(html, /id="page-loader"/, 'Missing branded page loader');
+assert.match(html, /class="page-loader-logo"[^>]+\/images\/logo\.jpg/, 'Loader should display the salon logo');
 assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, 'Homepage needs one H1');
 assert.ok(!html.includes('SEND AN ENQUIRY'), 'Duplicate contact enquiry form should not appear');
 for (const id of ['home','about','services','booking','gallery','location','reviews','contact','privacy']) assert.match(html, new RegExp('id="' + id + '"'), 'Missing #' + id);

@@ -5,9 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/images/logo.jpg" />
     <link rel="apple-touch-icon" href="/images/logo.jpg" />
+    <link rel="preload" href="/images/logo.jpg" as="image" fetchpriority="high" />
+    <link rel="preload" href="/images/hero-beauty-salon.webp" as="image" fetchpriority="high" />
+    <style>
+      html.site-opening,html.site-opening body{overflow:hidden}
+      #page-loader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:radial-gradient(circle at 50% 43%,#fff 0,#fff7fa 32%,transparent 66%),linear-gradient(145deg,#fff8fb,#f5c4d5);opacity:1;visibility:visible;transition:opacity .4s ease,visibility .4s ease}
+      #page-loader.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+      .page-loader-inner{display:grid;place-items:center;gap:14px;padding:24px;color:#691936;text-align:center}
+      .page-loader-logo{width:112px;height:112px;border:3px solid #ec9eb8;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 18px 45px #6919362b;animation:loader-breathe 1.55s ease-in-out infinite}
+      .page-loader-name{font:600 11px/1.3 Arial,sans-serif;letter-spacing:2.5px;text-transform:uppercase}
+      .page-loader-line{position:relative;width:112px;height:2px;overflow:hidden;border-radius:2px;background:#ec9eb866}
+      .page-loader-line:after{position:absolute;inset:0;content:"";background:#b92a58;transform:translateX(-100%);animation:loader-line 1.15s ease-in-out infinite}
+      @keyframes loader-breathe{50%{transform:scale(1.045);box-shadow:0 22px 52px #6919363d}}
+      @keyframes loader-line{50%{transform:translateX(0)}100%{transform:translateX(100%)}}
+      @media(prefers-reduced-motion:reduce){.page-loader-logo,.page-loader-line:after{animation:none}}
+    </style>
+    <script>document.documentElement.classList.add("site-opening")</script>
+    <noscript><style>html.site-opening,html.site-opening body{overflow:auto}#page-loader{display:none}</style></noscript>
     <!--app-head-->
   </head>
   <body>
+    <div id="page-loader" role="status" aria-label="Loading NG Aesthetics & Beauty Lab">
+      <div class="page-loader-inner">
+        <img class="page-loader-logo" src="/images/logo.jpg" width="112" height="112" alt="" fetchpriority="high" />
+        <span class="page-loader-name">NG Aesthetics &amp; Beauty Lab</span>
+        <span class="page-loader-line" aria-hidden="true"></span>
+      </div>
+    </div>
     <div id="root"><!--app-html--></div>
     <script type="module" src="/client/main.tsx"></script>
   </body>
