@@ -30,6 +30,9 @@ for (const className of ['floral-top-left','floral-right','floral-bottom','gold-
 assert.match(html, /class="contact-head"/);
 assert.match(html, /class="footer-hours"/);
 assert.match(html, /OPEN DAILY/);
+for (const socialUrl of ['https://www.facebook.com/ngaestheticbeautylab','https://www.instagram.com/ngaestheticbeautylab/','https://www.tiktok.com/@ngaestheticandbeautylab','https://stan.store/Ngaestheticacademy']) assert.ok(html.includes(socialUrl), 'Missing social link: ' + socialUrl);
+assert.match(html, /class="social-links topbar-socials"/);
+assert.match(html, /class="social-links social-links-labelled footer-socials"/);
 for (const id of ['home','about','services','booking','gallery','location','reviews','contact','privacy']) assert.match(html, new RegExp('id="' + id + '"'), 'Missing #' + id);
 const ordered = ['id="home"','id="about"','id="services"','id="booking"','id="gallery"','id="location"','id="reviews"','id="contact"'];
 for (let index = 1; index < ordered.length; index++) assert.ok(html.indexOf(ordered[index]) > html.indexOf(ordered[index - 1]), `Section order: ${ordered[index]}`);
@@ -41,6 +44,7 @@ const schema = JSON.parse(schemaMatch[1]);
 assert.equal(schema['@type'], 'BeautySalon');
 assert.equal(schema.telephone, '+44 7801 247820');
 assert.equal(schema.address.postalCode, 'SK14 3FX');
+assert.deepEqual(schema.sameAs, ['https://www.facebook.com/ngaestheticbeautylab','https://www.instagram.com/ngaestheticbeautylab/','https://www.tiktok.com/@ngaestheticandbeautylab','https://stan.store/Ngaestheticacademy']);
 assert.ok(!schema.openingHours && !schema.aggregateRating);
 for (const category of categories) {
   assert.ok(html.includes(`id="prices-${category.slug}"`));
@@ -95,6 +99,8 @@ assert.match(css,/\.contact-section\{[^}]*#FFF8F8/);
 assert.match(css,/\.footer\{[^}]*#F6CCD6/);
 assert.ok(!/\.contact-section\{[^}]*background:var\(--rose-5\)/.test(css));
 assert.ok(!/\.footer\{[^}]*background:var\(--rose-7\)/.test(css));
+assert.match(css,/\.topbar\{[^}]*#D53B70/);
+assert.match(css,/\.social-link svg\{[^}]*fill:currentColor/);
 assert.match(css,/prefers-reduced-motion/);
 assert.match(css,/:focus-visible/);
 for (const dir of ['app','components','lib']) for (const path of await readdir(dir,{recursive:true})) {

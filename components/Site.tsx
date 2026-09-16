@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { business, bookingUrl } from '../lib/business';
 import { categories, priceDisclaimer, type Category } from '../lib/services';
+import SocialLinks from './SocialLinks';
 
 export function Photo({ name, alt, priority = false }: { name: string; alt: string; priority?: boolean }) {
   return <picture>
@@ -54,7 +55,7 @@ export function Footer() {
       <div className="footer-brand"><a href="/" className="brand"><img src="/images/logo.jpg" width="68" height="68" alt="NG Aesthetics & Beauty Lab logo"/><span>NG Aesthetics<small>&amp; BEAUTY LAB</small></span></a><p>Professional beauty, skin and aesthetic treatments in Hattersley, Hyde.</p></div>
       <div><h3>Explore</h3><nav className="footer-links" aria-label="Footer navigation">{footerLinks.map(([name,url]) => <a href={url} key={url}>{name}</a>)}</nav></div>
       <div><h3>Visit &amp; opening hours</h3><address>Sgt Mark Stansfield Way<br/>Hattersley, Hyde<br/>SK14 3FX, United Kingdom</address><p className="footer-hours"><span>OPEN DAILY</span><strong>10:00&ndash;22:00</strong></p><a href={business.mapsUrl} target="_blank" rel="noopener noreferrer">Open Google Maps &rarr;</a></div>
-      <div><h3>Contact</h3><a className="footer-phone" href={business.telephone}>{business.phone}</a><a href={bookingUrl()}>Message on WhatsApp &rarr;</a><a href={business.instagram} target="_blank" rel="noopener noreferrer">{business.instagramHandle} &rarr;</a><a className="admin-link" href="/admin">Salon admin</a></div>
+      <div><h3>Contact &amp; social</h3><a className="footer-phone" href={business.telephone}>{business.phone}</a><a href={bookingUrl()}>Message on WhatsApp &rarr;</a><SocialLinks labelled className="footer-socials"/><a className="admin-link" href="/admin">Salon admin</a></div>
     </div>
     <div className="footer-info" id="privacy">
       <details><summary>Privacy</summary><p>Booking requests and contact details are stored securely so the salon can manage your appointment. The salon uses them only to arrange and administer your booking. Please do not include medical or sensitive information. WhatsApp, Instagram and Google Maps follow their own privacy policies.</p></details>

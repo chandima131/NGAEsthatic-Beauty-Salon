@@ -1,7 +1,10 @@
 export const business = {
 name: 'NG Aesthetics & Beauty Lab',
 phone: '+44 7801 247820', telephone: 'tel:+447801247820', whatsapp: 'https://wa.me/447801247820',
+facebook: 'https://www.facebook.com/ngaestheticbeautylab',
 instagram: 'https://www.instagram.com/ngaestheticbeautylab/', instagramHandle: '@ngaestheticbeautylab',
+tiktok: 'https://www.tiktok.com/@ngaestheticandbeautylab', tiktokHandle: '@ngaestheticandbeautylab',
+stanStore: 'https://stan.store/Ngaestheticacademy',
 address: 'Sgt Mark Stansfield Way, Hattersley, Hyde, SK14 3FX, United Kingdom',
 mapsUrl: 'https://maps.app.goo.gl/GYVoCTUVpVWDdpUJ9',
 coordinates: { latitude: 53.4483409, longitude: -2.0333377 },
