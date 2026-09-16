@@ -2,6 +2,7 @@ import GalleryGrid from '../components/GalleryGrid';
 import GoogleReviews from '../components/GoogleReviews';
 import LocationSection from '../components/LocationSection';
 import BookingCalendar from '../components/BookingCalendar';
+import FloralDecor from '../components/FloralDecor';
 import { bookingUrl, business } from '../lib/business';
 import { Photo, PriceDirectory, SectionHeading } from '../components/Site';
 
@@ -36,6 +37,7 @@ export default function Home() {
     </section>
 
     <section className="services-section" id="services" aria-labelledby="services-title">
+      <FloralDecor/>
       <div className="section">
         <div className="services-heading">
           <SectionHeading eyebrow="SERVICES & PRICE LIST" title={<>Everything you need to<br/><em>feel beautifully you.</em></>} copy="Explore every treatment and confirmed price in one place. Open a category to see its full menu, then book straight through WhatsApp."/>
