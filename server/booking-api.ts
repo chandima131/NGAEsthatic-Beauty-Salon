@@ -6,7 +6,6 @@ import {
   type BlackoutInput,
   type BookingStatus,
   type D1DatabaseLike,
-  type SlotInput,
 } from '../db/booking-store';
 import {
   clearAdminSessionCookie,
@@ -24,7 +23,7 @@ export type BookingEnvironment = AdminAuthEnvironment & {
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const timePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const bookingStatuses: BookingStatus[] = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
-const treatmentNames = new Set(categories.flatMap(category => category.treatments.map(treatment => treatment.name)));
+const treatmentsByName = new Map(categories.flatMap(category => category.treatments.map(treatment => [treatment.name, treatment] as const)));
 
 function json(data: unknown, status = 200, extraHeaders: HeadersInit = {}) {
   return new Response(JSON.stringify(data), {
@@ -72,9 +71,6 @@ function timeToMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function minutesToTime(value: number) {
-  return String(Math.floor(value / 60)).padStart(2, '0') + ':' + String(value % 60).padStart(2, '0');
-}
 
 function textField(value: unknown, max: number, required = false) {
   if (typeof value !== 'string') return required ? null : '';
@@ -158,11 +154,17 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
     if (path === '/api/availability') {
       if (request.method !== 'GET') return methodNotAllowed(['GET']);
       const month = url.searchParams.get('month') ?? londonToday().slice(0, 7);
+      const treatmentName = url.searchParams.get('treatment')?.trim() ?? '';
+      const treatment = treatmentsByName.get(treatmentName);
       const range = monthRange(month);
       if (!range) return json({ error: 'Use a valid month in YYYY-MM format.' }, 400);
-      const availability = await store.getAvailability(range.from, range.to);
+      if (!treatment) return json({ error: 'Choose a treatment to see its available times.' }, 400);
+      const availability = await store.getAvailability(range.from, range.to, treatment.durationMinutes);
       return json({
         month,
+        treatment: treatment.name,
+        durationMinutes: treatment.durationMinutes,
+        openingHours: { days: 'Monday to Sunday', opens: '10:00', closes: '22:00' },
         timezone: 'Europe/London',
         slots: availability.slots.map(slot => ({
           id: slot.id,
@@ -186,22 +188,26 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
       if (!sameOrigin(request)) return json({ error: 'Cross-site requests are not accepted.' }, 403);
       const input = await body(request);
       if (input.website) return json({ error: 'Unable to submit this booking.' }, 400);
-      const slotId = Number(input.slotId);
+      const slotId = textField(input.slotId, 20, true);
       const customerName = textField(input.customerName, 80, true);
       const phone = textField(input.phone, 30, true);
       const email = textField(input.email, 120);
-      const treatment = textField(input.treatment, 120, true);
+      const treatmentName = textField(input.treatment, 120, true);
       const customerNotes = textField(input.customerNotes, 500);
-      if (!Number.isInteger(slotId) || slotId < 1 || !customerName || !phone || !treatment || input.consent !== true) return json({ error: 'Complete all required booking details.' }, 400);
+      const [date, startTime, extra] = slotId?.split('|') ?? [];
+      const treatment = treatmentName ? treatmentsByName.get(treatmentName) : undefined;
+      if (!slotId || extra !== undefined || !date || !startTime || !customerName || !phone || !treatment || input.consent !== true) return json({ error: 'Complete all required booking details.' }, 400);
+      if (!isRealDate(date) || !timePattern.test(startTime)) return json({ error: 'Choose a valid appointment time.' }, 400);
       if (!/^[0-9+() .-]{6,30}$/.test(phone)) return json({ error: 'Enter a valid phone number.' }, 400);
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Enter a valid email address.' }, 400);
-      if (!treatmentNames.has(treatment)) return json({ error: 'Choose a treatment from the service list.' }, 400);
       const booking = await store.createBooking({
-        slotId,
+        date,
+        startTime,
+        durationMinutes: treatment.durationMinutes,
         customerName,
         phone,
         email: email || null,
-        treatment,
+        treatment: treatment.name,
         customerNotes: customerNotes || null,
       });
       return json({
@@ -241,6 +247,36 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
       const adminError = await requireAdmin(request, env);
       if (adminError) return adminError;
 
+      if (path === '/api/admin/bookings') {
+        if (request.method !== 'POST') return methodNotAllowed(['POST']);
+        if (!sameOrigin(request)) return json({ error: 'Cross-site requests are not accepted.' }, 403);
+        const input = await body(request);
+        const customerName = textField(input.customerName, 80, true);
+        const phone = textField(input.phone, 30, true);
+        const email = textField(input.email, 120);
+        const treatmentName = textField(input.treatment, 120, true);
+        const date = textField(input.date, 10, true);
+        const startTime = textField(input.startTime, 5, true);
+        const adminNotes = textField(input.adminNotes, 600);
+        const treatment = treatmentName ? treatmentsByName.get(treatmentName) : undefined;
+        if (!customerName || !phone || !treatment || !date || !isRealDate(date) || !startTime || !timePattern.test(startTime) || adminNotes === null) return json({ error: 'Complete the customer, treatment, date, and time.' }, 400);
+        if (!/^[0-9+() .-]{6,30}$/.test(phone)) return json({ error: 'Enter a valid phone number.' }, 400);
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Enter a valid email address.' }, 400);
+        const booking = await store.createBooking({
+          date,
+          startTime,
+          durationMinutes: treatment.durationMinutes,
+          customerName,
+          phone,
+          email: email || null,
+          treatment: treatment.name,
+          customerNotes: null,
+          adminNotes: adminNotes || 'Booked directly by the salon.',
+          status: 'confirmed',
+        });
+        return json({ booking, message: 'Manual booking added and confirmed.' }, 201);
+      }
+
       if (path === '/api/admin/overview') {
         if (request.method !== 'GET') return methodNotAllowed(['GET']);
         const defaultFrom = londonToday();
@@ -249,33 +285,6 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
         const range = validRange(url.searchParams.get('from') ?? defaultFrom, url.searchParams.get('to') ?? defaultToDate.toISOString().slice(0, 10));
         if (!range) return json({ error: 'Use valid from and to dates.' }, 400);
         return json({ admin: { authenticated: true }, ...(await store.getOverview(range.from, range.to)) });
-      }
-
-      if (path === '/api/admin/slots') {
-        if (request.method !== 'POST') return methodNotAllowed(['POST']);
-        if (!sameOrigin(request)) return json({ error: 'Cross-site requests are not accepted.' }, 403);
-        const input = await body(request);
-        const date = textField(input.date, 10, true);
-        const startTime = textField(input.startTime, 5, true);
-        const endTime = textField(input.endTime, 5, true);
-        const durationMinutes = Number(input.durationMinutes);
-        if (!date || !isRealDate(date) || date < londonToday() || !startTime || !endTime || !timePattern.test(startTime) || !timePattern.test(endTime) || ![15, 30, 45, 60, 90, 120].includes(durationMinutes)) return json({ error: 'Enter a valid future date, time range, and slot length.' }, 400);
-        const start = timeToMinutes(startTime);
-        const end = timeToMinutes(endTime);
-        if (end <= start || end - start > 12 * 60) return json({ error: 'The end time must be after the start time.' }, 400);
-        const slots: SlotInput[] = [];
-        for (let value = start; value + durationMinutes <= end; value += durationMinutes) slots.push({ date, startTime: minutesToTime(value), durationMinutes });
-        if (!slots.length || slots.length > 48) return json({ error: 'This time range does not create a valid set of slots.' }, 400);
-        await store.addSlots(slots);
-        return json({ message: slots.length + (slots.length === 1 ? ' slot added.' : ' slots added.'), count: slots.length }, 201);
-      }
-
-      const slotMatch = path.match(/^\/api\/admin\/slots\/(\d+)$/);
-      if (slotMatch) {
-        if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
-        if (!sameOrigin(request)) return json({ error: 'Cross-site requests are not accepted.' }, 403);
-        const result = await store.removeSlot(Number(slotMatch[1]));
-        return json({ ...result, message: result.disabled ? 'The slot has booking history, so it was marked unavailable.' : 'Slot removed.' });
       }
 
       if (path === '/api/admin/blackouts') {
@@ -316,9 +325,10 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
         const input = await body(request);
         const status = typeof input.status === 'string' && bookingStatuses.includes(input.status as BookingStatus) ? input.status as BookingStatus : null;
         const adminNotes = textField(input.adminNotes, 600);
-        const slotId = input.slotId === undefined ? undefined : Number(input.slotId);
-        if (!status || adminNotes === null || (slotId !== undefined && (!Number.isInteger(slotId) || slotId < 1))) return json({ error: 'Enter a valid booking status, slot, and note.' }, 400);
-        const booking = await store.updateBooking(bookingMatch[1], { status, adminNotes: adminNotes || null, slotId });
+        const date = input.date === undefined ? undefined : textField(input.date, 10, true);
+        const startTime = input.startTime === undefined ? undefined : textField(input.startTime, 5, true);
+        if (!status || adminNotes === null || (date !== undefined && (!date || !isRealDate(date))) || (startTime !== undefined && (!startTime || !timePattern.test(startTime)))) return json({ error: 'Enter a valid booking status, appointment time, and note.' }, 400);
+        const booking = await store.updateBooking(bookingMatch[1], { status, adminNotes: adminNotes || null, date, startTime });
         return json({ booking, message: 'Booking updated.' });
       }
     }

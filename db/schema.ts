@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const availabilitySlots = sqliteTable('availability_slots', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -34,12 +34,22 @@ export const bookings = sqliteTable('bookings', {
   phone: text('phone').notNull(),
   email: text('email'),
   treatment: text('treatment').notNull(),
+  durationMinutes: integer('duration_minutes').notNull().default(60),
   customerNotes: text('customer_notes'),
   adminNotes: text('admin_notes'),
   status: text('status', { enum: ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'] }).notNull().default('pending'),
   createdAt: text('created_at').notNull().default(sql.raw('CURRENT_TIMESTAMP')),
   updatedAt: text('updated_at').notNull().default(sql.raw('CURRENT_TIMESTAMP')),
 }, table => [
-  uniqueIndex('idx_bookings_active_slot').on(table.slotId).where(sql.raw('"status" NOT IN (' + "'cancelled', 'no_show'" + ')')),
+  uniqueIndex('idx_bookings_active_slot').on(table.slotId).where(sql.raw('"status" IN (' + "'pending', 'confirmed'" + ')')),
   index('idx_bookings_status_created').on(table.status, table.createdAt),
+]);
+
+export const bookingSegments = sqliteTable('booking_segments', {
+  bookingId: text('booking_id').notNull().references(() => bookings.id, { onDelete: 'cascade' }),
+  slotDate: text('slot_date').notNull(),
+  segmentTime: text('segment_time').notNull(),
+}, table => [
+  primaryKey({ columns: [table.slotDate, table.segmentTime] }),
+  index('idx_booking_segments_booking').on(table.bookingId),
 ]);

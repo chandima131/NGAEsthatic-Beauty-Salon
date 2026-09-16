@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { categories } from '../lib/services';
 
-type Slot = { id: number; slot_date: string; start_time: string; duration_minutes: number; status: 'available' | 'unavailable'; note: string | null };
 type Blackout = { id: number; start_date: string; end_date: string; start_time: string | null; end_time: string | null; type: 'unavailable' | 'holiday'; label: string | null };
 type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 type Booking = {
@@ -19,7 +19,7 @@ type Booking = {
   start_time: string;
   duration_minutes: number;
 };
-type Overview = { admin: { authenticated: true }; slots: Slot[]; blackouts: Blackout[]; bookings: Booking[] };
+type Overview = { admin: { authenticated: true }; blackouts: Blackout[]; bookings: Booking[] };
 type ApiError = { error?: string };
 type AuthState = 'loading' | 'ready' | 'signin' | 'unconfigured' | 'error';
 
@@ -36,8 +36,9 @@ function prettyDate(value: string) {
   return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value + 'T12:00:00'));
 }
 
-function slotLabel(slot: Slot) {
-  return prettyDate(slot.slot_date) + ' · ' + slot.start_time + ' · ' + slot.duration_minutes + ' min';
+function lastStartTime(durationMinutes: number) {
+  const value = 10 * 60 + Math.floor(((22 * 60 - durationMinutes) - 10 * 60) / 30) * 30;
+  return String(Math.floor(value / 60)).padStart(2, '0') + ':' + String(value % 60).padStart(2, '0');
 }
 
 async function api<T>(path: string, init?: RequestInit) {
@@ -52,12 +53,12 @@ async function api<T>(path: string, init?: RequestInit) {
   return data;
 }
 
-function BookingCard({ booking, slots, blockedSlotIds, onChanged }: { booking: Booking; slots: Slot[]; blockedSlotIds: Set<number>; onChanged: (message: string) => void }) {
+function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: (message: string) => void }) {
   const [status, setStatus] = useState<BookingStatus>(booking.status);
-  const [slotId, setSlotId] = useState(String(booking.slot_id));
+  const [appointmentDate, setAppointmentDate] = useState(booking.slot_date);
+  const [appointmentTime, setAppointmentTime] = useState(booking.start_time);
   const [notes, setNotes] = useState(booking.admin_notes ?? '');
   const [busy, setBusy] = useState(false);
-  const choices = slots.filter(slot => slot.status === 'available' && (slot.id === booking.slot_id || !blockedSlotIds.has(slot.id)));
 
   async function save() {
     setBusy(true);
@@ -65,7 +66,7 @@ function BookingCard({ booking, slots, blockedSlotIds, onChanged }: { booking: B
       const result = await api<{ message: string }>('/api/admin/bookings/' + booking.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, slotId: Number(slotId), adminNotes: notes }),
+        body: JSON.stringify({ status, date: appointmentDate, startTime: appointmentTime, adminNotes: notes }),
       });
       onChanged(result.message);
     } catch (error) {
@@ -100,7 +101,8 @@ function BookingCard({ booking, slots, blockedSlotIds, onChanged }: { booking: B
     {booking.customer_notes && <div className="customer-note"><small>CUSTOMER NOTE</small><p>{booking.customer_notes}</p></div>}
     <div className="admin-edit-grid">
       <label>Status<select value={status} onChange={event => setStatus(event.target.value as BookingStatus)}>{statuses.map(item => <option key={item} value={item}>{statusLabels[item]}</option>)}</select></label>
-      <label>Appointment time<select value={slotId} onChange={event => setSlotId(event.target.value)}>{choices.map(slot => <option key={slot.id} value={slot.id}>{slotLabel(slot)}</option>)}</select></label>
+      <label>Appointment date<input type="date" value={appointmentDate} onChange={event => setAppointmentDate(event.target.value)}/></label>
+      <label>Start time <small>10:00–{lastStartTime(booking.duration_minutes)}</small><input type="time" min="10:00" max={lastStartTime(booking.duration_minutes)} step="1800" value={appointmentTime} onChange={event => setAppointmentTime(event.target.value)}/></label>
       <label className="full">Private admin note<textarea rows={2} maxLength={600} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Visible only in the admin panel"/></label>
     </div>
     <div className="admin-card-actions"><button className="button small" type="button" disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save changes'}</button><button className="admin-delete" type="button" disabled={busy} onClick={remove}>Delete booking</button></div>
@@ -114,10 +116,6 @@ export default function AdminPanel() {
   const [from, setFrom] = useState(isoOffset(-90));
   const [to, setTo] = useState(isoOffset(365));
   const [filter, setFilter] = useState<'all' | BookingStatus>('all');
-  const [slotDate, setSlotDate] = useState(isoOffset(1));
-  const [slotStart, setSlotStart] = useState('09:00');
-  const [slotEnd, setSlotEnd] = useState('17:00');
-  const [slotDuration, setSlotDuration] = useState('60');
   const [blockType, setBlockType] = useState<'unavailable' | 'holiday'>('unavailable');
   const [blockStartDate, setBlockStartDate] = useState(isoOffset(1));
   const [blockEndDate, setBlockEndDate] = useState(isoOffset(1));
@@ -128,6 +126,14 @@ export default function AdminPanel() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
+  const [manualEmail, setManualEmail] = useState('');
+  const [manualTreatment, setManualTreatment] = useState('');
+  const [manualDate, setManualDate] = useState(isoOffset(1));
+  const [manualTime, setManualTime] = useState('10:00');
+  const [manualNotes, setManualNotes] = useState('');
+  const manualTreatmentDetails = useMemo(() => categories.flatMap(category => category.treatments).find(item => item.name === manualTreatment), [manualTreatment]);
 
   const refresh = useCallback(async (message = '') => {
     setNotice(message);
@@ -145,15 +151,13 @@ export default function AdminPanel() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const blockedSlotIds = useMemo(() => new Set(overview?.bookings.filter(booking => booking.status === 'pending' || booking.status === 'confirmed').map(booking => booking.slot_id) ?? []), [overview]);
   const visibleBookings = useMemo(() => overview?.bookings.filter(booking => filter === 'all' || booking.status === filter) ?? [], [overview, filter]);
-  const upcomingSlots = useMemo(() => overview?.slots.filter(slot => slot.slot_date >= isoOffset(0)).slice(0, 80) ?? [], [overview]);
   const stats = useMemo(() => ({
     pending: overview?.bookings.filter(item => item.status === 'pending').length ?? 0,
     confirmed: overview?.bookings.filter(item => item.status === 'confirmed').length ?? 0,
-    open: overview?.slots.filter(item => item.status === 'available' && !blockedSlotIds.has(item.id)).length ?? 0,
+    total: overview?.bookings.length ?? 0,
     holidays: overview?.blackouts.filter(item => item.type === 'holiday').length ?? 0,
-  }), [overview, blockedSlotIds]);
+  }), [overview]);
 
   async function signIn(event: FormEvent) {
     event.preventDefault();
@@ -187,18 +191,30 @@ export default function AdminPanel() {
   }
 
 
-  async function addSlots(event: FormEvent) {
+  async function addManualBooking(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     try {
-      const result = await api<{ message: string }>('/api/admin/slots', {
+      const result = await api<{ message: string }>('/api/admin/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: slotDate, startTime: slotStart, endTime: slotEnd, durationMinutes: Number(slotDuration) }),
+        body: JSON.stringify({
+          customerName: manualName,
+          phone: manualPhone,
+          email: manualEmail,
+          treatment: manualTreatment,
+          date: manualDate,
+          startTime: manualTime,
+          adminNotes: manualNotes,
+        }),
       });
+      setManualName('');
+      setManualPhone('');
+      setManualEmail('');
+      setManualNotes('');
       await refresh(result.message);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Unable to add slots.');
+      setNotice(error instanceof Error ? error.message : 'Unable to add this booking.');
     } finally {
       setBusy(false);
     }
@@ -217,19 +233,6 @@ export default function AdminPanel() {
       await refresh(result.message + ' Existing bookings remain visible so you can contact affected customers.');
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Unable to add unavailable time.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function removeSlot(id: number) {
-    if (!window.confirm('Remove this available slot?')) return;
-    setBusy(true);
-    try {
-      const result = await api<{ message: string }>('/api/admin/slots/' + id, { method: 'DELETE' });
-      await refresh(result.message);
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Unable to remove slot.');
     } finally {
       setBusy(false);
     }
@@ -264,9 +267,23 @@ export default function AdminPanel() {
       <div className="admin-stats">
         <div><small>PENDING REQUESTS</small><strong>{stats.pending}</strong></div>
         <div><small>CONFIRMED</small><strong>{stats.confirmed}</strong></div>
-        <div><small>OPEN SLOTS</small><strong>{stats.open}</strong></div>
+        <div><small>TOTAL APPOINTMENTS</small><strong>{stats.total}</strong></div>
         <div><small>HOLIDAYS</small><strong>{stats.holidays}</strong></div>
       </div>
+
+      <section className="admin-section manual-booking-section" aria-labelledby="manual-booking-title">
+        <div className="admin-section-heading"><div><p className="eyebrow">DIRECT BOOKINGS</p><h2 id="manual-booking-title">Add a customer booking</h2><p>Use this when a customer books with you by WhatsApp, phone, social media, or another message. The appointment is added as confirmed.</p></div><span className="status-pill confirmed">CONFIRMED</span></div>
+        <form className="admin-manual-booking-form" onSubmit={addManualBooking}>
+          <label>Customer name <span>*</span><input required maxLength={80} autoComplete="off" value={manualName} onChange={event => setManualName(event.target.value)}/></label>
+          <label>Phone number <span>*</span><input required maxLength={30} inputMode="tel" placeholder="+44" value={manualPhone} onChange={event => setManualPhone(event.target.value)}/></label>
+          <label>Email <small>optional</small><input type="email" maxLength={120} value={manualEmail} onChange={event => setManualEmail(event.target.value)}/></label>
+          <label>Treatment <span>*</span><select required value={manualTreatment} onChange={event => { setManualTreatment(event.target.value); setManualTime('10:00'); }}><option value="">Choose a treatment</option>{categories.map(category => <optgroup label={category.name} key={category.slug}>{category.treatments.map(item => <option value={item.name} key={item.name}>{item.name} · {item.durationMinutes} min</option>)}</optgroup>)}</select></label>
+          <label>Date <span>*</span><input type="date" min={isoOffset(0)} required value={manualDate} onChange={event => setManualDate(event.target.value)}/></label>
+          <label>Start time <small>{manualTreatmentDetails ? 'latest ' + lastStartTime(manualTreatmentDetails.durationMinutes) : '10:00–22:00'}</small><input type="time" min="10:00" max={lastStartTime(manualTreatmentDetails?.durationMinutes ?? 15)} step="1800" required value={manualTime} onChange={event => setManualTime(event.target.value)}/></label>
+          <label className="full">Private note <small>optional</small><textarea rows={3} maxLength={600} placeholder="For example: booked through WhatsApp" value={manualNotes} onChange={event => setManualNotes(event.target.value)}/></label>
+          <button className="button full" type="submit" disabled={busy || !manualTreatment}>{busy ? 'Adding booking…' : 'Add confirmed booking'}</button>
+        </form>
+      </section>
 
       <section className="admin-section" aria-labelledby="manage-bookings-title">
         <div className="admin-section-heading">
@@ -279,26 +296,16 @@ export default function AdminPanel() {
           </div>
         </div>
         <div className="admin-bookings">
-          {visibleBookings.length ? visibleBookings.map(booking => <BookingCard key={booking.id} booking={booking} slots={overview.slots} blockedSlotIds={blockedSlotIds} onChanged={message => void refresh(message)}/>) : <div className="admin-empty">No bookings match this date range and status.</div>}
+          {visibleBookings.length ? visibleBookings.map(booking => <BookingCard key={booking.id} booking={booking} onChanged={message => void refresh(message)}/>) : <div className="admin-empty">No bookings match this date range and status.</div>}
         </div>
       </section>
 
       <section className="admin-section availability-manager" aria-labelledby="availability-title">
-        <div className="admin-section-heading"><div><p className="eyebrow">AVAILABILITY</p><h2 id="availability-title">Open and close your diary</h2><p>Add a full day of appointment times, then remove individual slots whenever needed.</p></div></div>
-        <div className="admin-tools-grid">
-          <form className="admin-tool-card" onSubmit={addSlots}>
-            <span className="tool-number">01</span><h3>Add available slots</h3><p>Create evenly spaced appointments for one day.</p>
-            <div className="admin-form-grid">
-              <label className="full">Date<input type="date" min={isoOffset(0)} required value={slotDate} onChange={event => setSlotDate(event.target.value)}/></label>
-              <label>Start<input type="time" required value={slotStart} onChange={event => setSlotStart(event.target.value)}/></label>
-              <label>Finish<input type="time" required value={slotEnd} onChange={event => setSlotEnd(event.target.value)}/></label>
-              <label className="full">Appointment length<select value={slotDuration} onChange={event => setSlotDuration(event.target.value)}><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option><option value="90">90 minutes</option><option value="120">120 minutes</option></select></label>
-            </div>
-            <button className="button" type="submit" disabled={busy}>Add times</button>
-          </form>
-
+        <div className="admin-section-heading"><div><p className="eyebrow">AVAILABILITY</p><h2 id="availability-title">Your regular working week</h2><p>Customer times are created automatically for every treatment. Add only the dates or hours when the salon is closed.</p></div></div>
+        <div className="admin-schedule-summary"><div><small>REGULAR DAYS</small><strong>Monday to Sunday</strong></div><div><small>REGULAR HOURS</small><strong>10:00–22:00</strong></div><p>Appointment lengths are set by treatment, with new start times every 30 minutes.</p></div>
+        <div className="admin-tools-grid single">
           <form className="admin-tool-card holiday-card" onSubmit={addBlackout}>
-            <span className="tool-number">02</span><h3>Mark unavailable</h3><p>Close a few hours, a full day, or add a holiday date range.</p>
+            <span className="tool-number">01</span><h3>Mark unavailable</h3><p>Close a few hours, a full day, or add a holiday date range.</p>
             <div className="admin-form-grid">
               <label className="full">Type<select value={blockType} onChange={event => setBlockType(event.target.value as 'unavailable' | 'holiday')}><option value="unavailable">Not available</option><option value="holiday">Holiday</option></select></label>
               <label>From date<input type="date" min={isoOffset(0)} required value={blockStartDate} onChange={event => { setBlockStartDate(event.target.value); if (blockEndDate < event.target.value) setBlockEndDate(event.target.value); }}/></label>
@@ -313,12 +320,8 @@ export default function AdminPanel() {
       </section>
 
       <section className="admin-section admin-diary" aria-labelledby="diary-title">
-        <div className="admin-section-heading"><div><p className="eyebrow">DIARY CONTROL</p><h2 id="diary-title">Upcoming slots and closures</h2></div></div>
-        <div className="admin-diary-grid">
-          <div>
-            <h3>Appointment slots</h3>
-            <div className="admin-list">{upcomingSlots.length ? upcomingSlots.map(slot => <div className={'admin-list-row ' + slot.status} key={slot.id}><div><strong>{prettyDate(slot.slot_date)} · {slot.start_time}</strong><small>{slot.duration_minutes} min · {blockedSlotIds.has(slot.id) ? 'Booked' : slot.status === 'available' ? 'Open' : 'Unavailable'}</small></div><button type="button" disabled={busy || blockedSlotIds.has(slot.id)} onClick={() => void removeSlot(slot.id)}>{blockedSlotIds.has(slot.id) ? 'Booked' : 'Remove'}</button></div>) : <div className="admin-empty">No appointment slots in this date range.</div>}</div>
-          </div>
+        <div className="admin-section-heading"><div><p className="eyebrow">DIARY CONTROL</p><h2 id="diary-title">Closures and holidays</h2></div></div>
+        <div className="admin-diary-grid single">
           <div>
             <h3>Unavailable and holidays</h3>
             <div className="admin-list">{overview.blackouts.length ? overview.blackouts.map(item => <div className={'admin-list-row blackout ' + item.type} key={item.id}><div><span>{item.type === 'holiday' ? 'HOLIDAY' : 'NOT AVAILABLE'}</span><strong>{prettyDate(item.start_date)}{item.end_date !== item.start_date ? ' — ' + prettyDate(item.end_date) : ''}</strong><small>{item.start_time && item.end_time ? item.start_time + '–' + item.end_time : 'Full day'}{item.label ? ' · ' + item.label : ''}</small></div><button type="button" disabled={busy} onClick={() => void removeBlackout(item.id)}>Remove</button></div>) : <div className="admin-empty">No closures or holidays in this date range.</div>}</div>

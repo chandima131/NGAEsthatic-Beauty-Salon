@@ -77,43 +77,60 @@ try {
   target.setDate(target.getDate() + 3);
   const date = isoDate(target);
   const month = date.slice(0, 7);
+  const treatment = 'Microneedling Facial';
+  const availabilityUrl = origin + '/api/availability?month=' + month + '&treatment=' + encodeURIComponent(treatment);
   const adminHeaders = { 'Content-Type': 'application/json', Cookie: adminCookie, Origin: origin };
-  response = await fetch(origin + '/api/admin/slots', { method: 'POST', headers: adminHeaders, body: JSON.stringify({ date, startTime: '10:00', endTime: '12:00', durationMinutes: 60 }) });
-  assert.equal(response.status, 201);
-  assert.equal((await response.json()).count, 2);
 
   response = await fetch(origin + '/api/availability?month=' + month);
+  assert.equal(response.status, 400);
+
+  response = await fetch(availabilityUrl);
   let availability = await response.json();
   assert.equal(response.status, 200);
-  assert.equal(availability.slots.filter(slot => slot.date === date).length, 2);
-  const selected = availability.slots.find(slot => slot.date === date);
+  assert.equal(availability.durationMinutes, 60);
+  assert.deepEqual(availability.openingHours, { days: 'Monday to Sunday', opens: '10:00', closes: '22:00' });
+  const targetSlots = availability.slots.filter(slot => slot.date === date);
+  assert.equal(targetSlots.length, 23);
+  assert.equal(targetSlots[0].time, '10:00');
+  assert.equal(targetSlots.at(-1).time, '21:00');
+  const selected = targetSlots[0];
 
   const customerHeaders = { 'Content-Type': 'application/json', Origin: origin };
-  const requestBody = { slotId: selected.id, customerName: 'Test Customer', phone: '+44 7700 900123', email: 'customer@example.test', treatment: 'Microneedling Facial', customerNotes: 'First visit', consent: true, website: '' };
+  const requestBody = { slotId: selected.id, customerName: 'Test Customer', phone: '+44 7700 900123', email: 'customer@example.test', treatment, customerNotes: 'First visit', consent: true, website: '' };
   response = await fetch(origin + '/api/bookings', { method: 'POST', headers: customerHeaders, body: JSON.stringify(requestBody) });
   assert.equal(response.status, 201);
   const created = await response.json();
   assert.match(created.booking.reference, /^[0-9A-F]{8}$/);
+  assert.equal(created.booking.durationMinutes, 60);
 
   response = await fetch(origin + '/api/bookings', { method: 'POST', headers: customerHeaders, body: JSON.stringify(requestBody) });
   assert.equal(response.status, 409);
+
+  availability = await (await fetch(availabilityUrl)).json();
+  const remainingTimes = availability.slots.filter(slot => slot.date === date).map(slot => slot.time);
+  assert.ok(!remainingTimes.includes('10:00') && !remainingTimes.includes('10:30'));
+  assert.ok(remainingTimes.includes('11:00'));
 
   response = await fetch(origin + '/api/admin/overview?from=' + date + '&to=' + date, { headers: adminHeaders });
   let overview = await response.json();
   assert.equal(response.status, 200);
   assert.equal(overview.bookings.length, 1);
   assert.equal(overview.bookings[0].customer_name, 'Test Customer');
+  assert.equal(overview.bookings[0].duration_minutes, 60);
+  assert.ok(!('slots' in overview));
   const bookingId = overview.bookings[0].id;
 
-  response = await fetch(origin + '/api/admin/bookings/' + bookingId, { method: 'PATCH', headers: adminHeaders, body: JSON.stringify({ status: 'confirmed', slotId: selected.id, adminNotes: 'Confirmed by test' }) });
+  response = await fetch(origin + '/api/admin/bookings/' + bookingId, { method: 'PATCH', headers: adminHeaders, body: JSON.stringify({ status: 'confirmed', date, startTime: '12:00', adminNotes: 'Confirmed and rescheduled by test' }) });
   assert.equal(response.status, 200);
-  assert.equal((await response.json()).booking.status, 'confirmed');
+  const updatedBooking = (await response.json()).booking;
+  assert.equal(updatedBooking.status, 'confirmed');
+  assert.equal(updatedBooking.start_time, '12:00');
 
   response = await fetch(origin + '/api/admin/blackouts', { method: 'POST', headers: adminHeaders, body: JSON.stringify({ type: 'holiday', startDate: date, endDate: date, startTime: '', endTime: '', label: 'Test holiday' }) });
   assert.equal(response.status, 201);
   const blackoutId = (await response.json()).blackout.id;
 
-  availability = await (await fetch(origin + '/api/availability?month=' + month)).json();
+  availability = await (await fetch(availabilityUrl)).json();
   assert.equal(availability.slots.filter(slot => slot.date === date).length, 0);
 
   response = await fetch(origin + '/api/admin/blackouts/' + blackoutId, { method: 'DELETE', headers: adminHeaders });
@@ -121,15 +138,35 @@ try {
   response = await fetch(origin + '/api/admin/bookings/' + bookingId, { method: 'DELETE', headers: adminHeaders });
   assert.equal(response.status, 200);
 
-  availability = await (await fetch(origin + '/api/availability?month=' + month)).json();
-  assert.equal(availability.slots.filter(slot => slot.date === date).length, 2);
+  availability = await (await fetch(availabilityUrl)).json();
+  assert.equal(availability.slots.filter(slot => slot.date === date).length, 23);
+  assert.equal((await fetch(origin + '/api/admin/slots', { method: 'POST', headers: adminHeaders, body: '{}' })).status, 404);
+
+  response = await fetch(origin + '/api/admin/bookings', {
+    method: 'POST',
+    headers: adminHeaders,
+    body: JSON.stringify({
+      customerName: 'Message Customer',
+      phone: '+44 7700 900456',
+      email: '',
+      treatment: 'Eyebrow Tint',
+      date,
+      startTime: '14:00',
+      adminNotes: 'Booked through WhatsApp',
+    }),
+  });
+  assert.equal(response.status, 201);
+  const manualBooking = (await response.json()).booking;
+  assert.equal(manualBooking.status, 'confirmed');
+  assert.equal(manualBooking.duration_minutes, 15);
+  assert.equal(manualBooking.admin_notes, 'Booked through WhatsApp');
 
   response = await fetch(origin + '/api/admin/overview?from=' + date + '&to=' + date, { headers: adminHeaders });
   overview = await response.json();
-  for (const slot of overview.slots) {
-    const deleted = await fetch(origin + '/api/admin/slots/' + slot.id, { method: 'DELETE', headers: adminHeaders });
-    assert.equal(deleted.status, 200);
-  }
+  assert.equal(overview.bookings.length, 1);
+  assert.equal(overview.bookings[0].customer_name, 'Message Customer');
+  response = await fetch(origin + '/api/admin/bookings/' + manualBooking.id, { method: 'DELETE', headers: adminHeaders });
+  assert.equal(response.status, 200);
 
   response = await fetch(origin + '/api/admin/logout', { method: 'POST', headers: adminHeaders });
   assert.equal(response.status, 200);
@@ -151,7 +188,7 @@ try {
       assert.ok(!source.includes('GOOGLE_MAPS_API_KEY') && !source.includes(testPasswordHash) && !source.includes(testSessionSecret));
     }
   }
-  console.log('PASS: production server, customer booking flow, password-protected admin controls, session logout, availability, holidays, assets, and secret isolation.');
+  console.log('PASS: production server, automatic treatment-duration availability, overlap protection, password admin controls, manual message bookings, rescheduling, holidays, and secret isolation.');
 } finally {
   child.kill();
 }

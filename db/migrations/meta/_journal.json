@@ -15,6 +15,13 @@
       "when": 1789498699270,
       "tag": "0001_rich_ultimo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789501724602,
+      "tag": "0002_giant_star_brand",
+      "breakpoints": true
     }
   ]
 }

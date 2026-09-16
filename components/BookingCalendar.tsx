@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { categories } from '../lib/services';
 
-type PublicSlot = { id: number; date: string; time: string; durationMinutes: number };
+type PublicSlot = { id: string; date: string; time: string; durationMinutes: number };
 type PublicBlackout = { startDate: string; endDate: string; startTime: string | null; endTime: string | null; type: 'unavailable' | 'holiday'; label: string | null };
-type Availability = { month: string; timezone: string; slots: PublicSlot[]; blackouts: PublicBlackout[] };
+type Availability = { month: string; treatment?: string; durationMinutes?: number; openingHours?: { days: string; opens: string; closes: string }; timezone: string; slots: PublicSlot[]; blackouts: PublicBlackout[] };
 type Confirmation = { reference: string; date: string; time: string; durationMinutes: number; treatment: string; status: string };
 
 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -20,6 +20,11 @@ function currentMonthValue() {
 function monthLabel(month: string) {
   const [year, value] = month.split('-').map(Number);
   return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(new Date(year, value - 1, 1));
+}
+
+function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
 }
 
 function longDate(date: string) {
@@ -50,13 +55,14 @@ export default function BookingCalendar() {
   const [month, setMonth] = useState(currentMonthValue);
   const [availability, setAvailability] = useState<Availability>({ month: currentMonthValue(), timezone: 'Europe/London', slots: [], blackouts: [] });
   const [selectedDate, setSelectedDate] = useState('');
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [calendarError, setCalendarError] = useState('');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [treatment, setTreatment] = useState('');
+  const selectedTreatment = useMemo(() => categories.flatMap(category => category.treatments).find(item => item.name === treatment), [treatment]);
 
   const slotsByDate = useMemo(() => {
     const grouped = new Map<string, PublicSlot[]>();
@@ -74,10 +80,18 @@ export default function BookingCalendar() {
   }, []);
 
   useEffect(() => {
+    if (!treatment) {
+      setAvailability({ month, timezone: 'Europe/London', slots: [], blackouts: [] });
+      setSelectedDate('');
+      setSelectedSlot(null);
+      setLoading(false);
+      setCalendarError('');
+      return;
+    }
     const controller = new AbortController();
     setLoading(true);
     setCalendarError('');
-    fetch('/api/availability?month=' + encodeURIComponent(month), { signal: controller.signal })
+    fetch('/api/availability?month=' + encodeURIComponent(month) + '&treatment=' + encodeURIComponent(treatment), { signal: controller.signal })
       .then(async response => {
         const data = await response.json() as Availability & { error?: string };
         if (!response.ok) throw new Error(data.error || 'Unable to load availability.');
@@ -91,7 +105,7 @@ export default function BookingCalendar() {
       })
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [month]);
+  }, [month, treatment]);
 
   const blackoutForDay = (date: string) => availability.blackouts.find(item => date >= item.startDate && date <= item.endDate && !item.startTime);
 
@@ -122,7 +136,13 @@ export default function BookingCalendar() {
       const data = await response.json() as { booking?: Confirmation; error?: string };
       if (!response.ok || !data.booking) throw new Error(data.error || 'Unable to request this appointment.');
       setConfirmation(data.booking);
-      setAvailability(current => ({ ...current, slots: current.slots.filter(slot => slot.id !== selectedSlot) }));
+      const bookedStart = timeToMinutes(data.booking.time);
+      const bookedEnd = bookedStart + data.booking.durationMinutes;
+      setAvailability(current => ({ ...current, slots: current.slots.filter(slot => {
+        if (slot.date !== data.booking?.date) return true;
+        const start = timeToMinutes(slot.time);
+        return start >= bookedEnd || start + slot.durationMinutes <= bookedStart;
+      }) }));
       event.currentTarget.reset();
       setTreatment('');
       setSelectedSlot(null);
@@ -152,7 +172,19 @@ export default function BookingCalendar() {
           <p className="eyebrow">ONLINE APPOINTMENTS</p>
           <h2 id="booking-title">Choose your day.<br/><em>Make it yours.</em></h2>
         </div>
-        <p>See the salon’s live availability, choose a time and send your appointment request. Times are shown in UK local time.</p>
+        <p>Choose your treatment first, then view times that fit its appointment length. The salon is available Monday to Sunday, 10:00–22:00.</p>
+      </div>
+
+      <div className="booking-treatment-picker">
+        <div><p className="eyebrow">STEP 1 · CHOOSE A TREATMENT</p><h3>What would you like to book?</h3></div>
+        <label>
+          <span>Treatment</span>
+          <select required value={treatment} onChange={event => { setTreatment(event.target.value); setSelectedSlot(null); }}>
+            <option value="">Choose a treatment</option>
+            {categories.map(category => <optgroup label={category.name} key={category.slug}>{category.treatments.map(item => <option key={item.name} value={item.name}>{item.name} · £{item.price} · {item.durationMinutes} min</option>)}</optgroup>)}
+          </select>
+        </label>
+        <p>{selectedTreatment ? selectedTreatment.durationMinutes + ' minute appointment · available daily from 10:00 to 22:00' : 'Select a treatment to open the live calendar.'}</p>
       </div>
 
       <div className="booking-shell">
@@ -191,9 +223,10 @@ export default function BookingCalendar() {
             })}
           </div>
           <div className="calendar-legend"><span><i/>Available</span><span><i/>Selected</span><span><i/>Unavailable</span></div>
-          {loading && <p className="calendar-status" role="status">Loading live availability…</p>}
+          {loading && treatment && <p className="calendar-status" role="status">Loading live availability…</p>}
           {calendarError && <p className="calendar-status error" role="alert">{calendarError}</p>}
-          {!loading && !calendarError && availability.slots.length === 0 && <p className="calendar-status">No online slots have been released for this month yet. Please check the next month or contact the salon.</p>}
+          {!treatment && <p className="calendar-status">Choose a treatment above to see available dates and times.</p>}
+          {treatment && !loading && !calendarError && availability.slots.length === 0 && <p className="calendar-status">No times are available for this treatment this month. Please try another month or contact the salon.</p>}
         </div>
 
         <div className="time-panel">
@@ -217,12 +250,7 @@ export default function BookingCalendar() {
           <label>Your name <span>*</span><input name="customerName" required maxLength={80} autoComplete="name"/></label>
           <label>Phone number <span>*</span><input name="phone" required maxLength={30} inputMode="tel" autoComplete="tel" placeholder="+44"/></label>
           <label>Email <small>optional</small><input name="email" type="email" maxLength={120} autoComplete="email"/></label>
-          <label>Treatment <span>*</span>
-            <select name="treatment" required value={treatment} onChange={event => setTreatment(event.target.value)}>
-              <option value="">Choose a treatment</option>
-              {categories.map(category => <optgroup label={category.name} key={category.slug}>{category.treatments.map(item => <option key={item.name} value={item.name}>{item.name} · £{item.price}</option>)}</optgroup>)}
-            </select>
-          </label>
+          <div className="booking-treatment-summary"><small>TREATMENT</small><strong>{selectedTreatment?.name || 'Choose a treatment above'}</strong><span>{selectedTreatment ? selectedTreatment.durationMinutes + ' min' : ''}</span><input type="hidden" name="treatment" value={treatment}/></div>
           <label className="full">Anything we should know? <small>optional — do not include medical details</small><textarea name="customerNotes" rows={4} maxLength={500} placeholder="A short appointment note"/></label>
           <label className="booking-consent full"><input type="checkbox" name="consent" value="yes" required/><span>I agree that my details can be stored and used to arrange this appointment. <a href="#privacy">Read privacy information.</a></span></label>
           <label className="booking-honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off"/></label>

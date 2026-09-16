@@ -23,9 +23,15 @@ assert.equal(oldPage.status, 301);
 assert.equal(oldPage.headers.get('location'), '/#contact');
 const asset = await worker.fetch(new Request('https://example.test/images/logo.jpg'), env);
 assert.equal(await asset.text(), 'asset');
-const availability = await worker.fetch(new Request('https://example.test/api/availability?month=2026-10'), env);
+const missingTreatment = await worker.fetch(new Request('https://example.test/api/availability?month=2026-10'), env);
+assert.equal(missingTreatment.status, 400);
+const availability = await worker.fetch(new Request('https://example.test/api/availability?month=2026-10&treatment=Bridal%20Makeup'), env);
 assert.equal(availability.status, 200);
-assert.deepEqual((await availability.json()).slots, []);
+const availabilityData = await availability.json();
+assert.equal(availabilityData.durationMinutes, 120);
+assert.deepEqual(availabilityData.openingHours, { days: 'Monday to Sunday', opens: '10:00', closes: '22:00' });
+assert.ok(availabilityData.slots.length > 0);
+assert.ok(availabilityData.slots.every(slot => slot.durationMinutes === 120));
 const anonymousAdmin = await worker.fetch(new Request('https://example.test/api/admin/overview'), env);
 assert.equal(anonymousAdmin.status, 401);
 const login = await worker.fetch(new Request('https://example.test/api/admin/login', {
@@ -41,4 +47,4 @@ const overview = await worker.fetch(new Request('https://example.test/api/admin/
 assert.equal(overview.status, 200);
 assert.equal((await overview.json()).admin.authenticated, true);
 assert.deepEqual(await (await worker.fetch(new Request('https://example.test/api/google-reviews'), env)).json(), { error: 'Not found' });
-console.log('PASS: Sites worker, one-page booking UI, password session, protected admin route, API routing, redirects, and static assets.');
+console.log('PASS: Sites worker, automatic treatment-specific availability, password session, protected admin route, redirects, and static assets.');

@@ -25,10 +25,11 @@ npm run db:generate
 
 ## Booking system
 
-- D1 stores appointment slots, unavailable periods, holidays and customer bookings.
-- Customers can view live monthly availability and submit a pending appointment request.
+- D1 stores unavailable periods, holidays, treatment-duration reservations and customer bookings.
+- The regular schedule is Monday to Sunday, 10:00–22:00. The calendar creates start times every 30 minutes and removes any time that overlaps another treatment.
+- Customers choose a treatment first, view times that fit its duration, and submit a pending appointment request.
 - /admin uses a password form and a signed, HTTP-only 12-hour session cookie. No email is required.
-- Admins can add day schedules, remove slots, block hours or dates, add holidays, confirm, complete, cancel, reschedule or delete bookings, and keep private notes.
+- Admins can add confirmed bookings received through messages or phone calls, block hours or dates, add holidays, confirm, complete, cancel, reschedule or delete bookings, and keep private notes.
 - Store ADMIN_PASSWORD_HASH and ADMIN_SESSION_SECRET only in server runtime settings. Neither value is exposed to browser code.
 - Customer details remain in protected admin responses and are never returned by the public availability API.
 

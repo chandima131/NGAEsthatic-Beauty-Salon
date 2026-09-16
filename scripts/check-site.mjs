@@ -15,7 +15,9 @@ const expected = {
   'vitamin-b12':[20,35],
 };
 for (const category of categories) assert.deepEqual(category.treatments.map(treatment => treatment.price), expected[category.slug], `Prices differ from business brief: ${category.slug}`);
-assert.equal(categories.flatMap(category => category.treatments).length, 38);
+const treatments = categories.flatMap(category => category.treatments);
+assert.equal(treatments.length, 38);
+assert.ok(treatments.every(treatment => treatment.durationMinutes >= 15 && treatment.durationMinutes <= 120 && treatment.durationMinutes % 15 === 0));
 
 const response = await fetch(origin);
 assert.equal(response.status, 200);
@@ -69,6 +71,14 @@ const robotsText = await (await fetch(origin + '/robots.txt')).text();
 assert.match(robotsText, /Disallow: \/admin/);
 assert.match(robotsText, /Disallow: \/api\//);
 assert.equal((await fetch(origin + '/missing-page')).status, 404);
+const adminSource = await readFile('components/AdminPanel.tsx', 'utf8');
+assert.ok(!adminSource.includes('Add available slots') && !adminSource.includes('/api/admin/slots'));
+assert.match(adminSource, /Add a customer booking/);
+assert.match(adminSource, /booked through WhatsApp/i);
+assert.match(adminSource, /Monday to Sunday/);
+const calendarSource = await readFile('components/BookingCalendar.tsx', 'utf8');
+assert.match(calendarSource, /CHOOSE A TREATMENT/);
+assert.match(calendarSource, /10:00–22:00/);
 const css = await readFile('app/globals.css','utf8');
 for (const colour of ['#EC9EB8','#DC7097','#D53B70','#B92A58','#8B2257','#691936','#46121F']) assert.ok(css.includes(colour), colour);
 assert.match(css,/prefers-reduced-motion/);
@@ -78,4 +88,4 @@ for (const dir of ['app','components','lib']) for (const path of await readdir(d
   const source = await readFile(`${dir}/${path}`,'utf8');
   assert.ok(!/ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢|ÃƒÂ¢Ã¢â‚¬Â |ÃƒÂ¢Ã…â€œ|Ãƒâ€šÃ‚Â£|Ã¯Â¿Â½/.test(source), `Encoding ${dir}/${path}`);
 }
-console.log('PASS: one page, ordered sections, 38 supplied prices, anchors, redirects, metadata, schema, sitemap, assets and pink palette.');
+console.log('PASS: one page, 38 supplied prices and realistic durations, automatic-hours booking UI, metadata, assets, and pink palette.');
