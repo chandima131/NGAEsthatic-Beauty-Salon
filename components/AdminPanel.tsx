@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { categories } from '../lib/services';
 
 type Blackout = { id: number; start_date: string; end_date: string; start_time: string | null; end_time: string | null; type: 'unavailable' | 'holiday'; label: string | null };
@@ -33,7 +33,9 @@ function isoOffset(days: number) {
 }
 
 function prettyDate(value: string) {
-  return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value + 'T12:00:00'));
+  const date = new Date(value + 'T12:00:00');
+  if (!value || Number.isNaN(date.getTime())) return 'Choose a date';
+  return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(date);
 }
 
 function lastStartTime(durationMinutes: number) {
@@ -53,12 +55,19 @@ async function api<T>(path: string, init?: RequestInit) {
   return data;
 }
 
-function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: (message: string) => void }) {
+function BookingRow({ booking, onChanged }: { booking: Booking; onChanged: (message: string) => void }) {
   const [status, setStatus] = useState<BookingStatus>(booking.status);
   const [appointmentDate, setAppointmentDate] = useState(booking.slot_date);
   const [appointmentTime, setAppointmentTime] = useState(booking.start_time);
   const [notes, setNotes] = useState(booking.admin_notes ?? '');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setStatus(booking.status);
+    setAppointmentDate(booking.slot_date);
+    setAppointmentTime(booking.start_time);
+    setNotes(booking.admin_notes ?? '');
+  }, [booking]);
 
   async function save() {
     setBusy(true);
@@ -84,37 +93,48 @@ function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: (mes
       onChanged(result.message);
     } catch (error) {
       onChanged(error instanceof Error ? error.message : 'Unable to delete booking.');
+    } finally {
       setBusy(false);
     }
   }
 
-  return <article className="admin-booking-card">
-    <div className="admin-booking-top">
-      <div><span className={'status-pill ' + booking.status}>{statusLabels[booking.status]}</span><h3>{booking.customer_name}</h3><p>{booking.treatment}</p></div>
-      <div className="booking-date-block"><strong>{prettyDate(booking.slot_date)}</strong><span>{booking.start_time} · {booking.duration_minutes} min</span></div>
-    </div>
-    <div className="admin-customer-grid">
-      <a href={'tel:' + booking.phone}><small>PHONE</small><strong>{booking.phone}</strong></a>
-      <a href={booking.email ? 'mailto:' + booking.email : undefined} aria-disabled={!booking.email}><small>EMAIL</small><strong>{booking.email || 'Not supplied'}</strong></a>
-      <div><small>REFERENCE</small><strong>{booking.id.slice(0, 8).toUpperCase()}</strong></div>
-    </div>
-    {booking.customer_notes && <div className="customer-note"><small>CUSTOMER NOTE</small><p>{booking.customer_notes}</p></div>}
-    <div className="admin-edit-grid">
-      <label>Status<select value={status} onChange={event => setStatus(event.target.value as BookingStatus)}>{statuses.map(item => <option key={item} value={item}>{statusLabels[item]}</option>)}</select></label>
-      <label>Appointment date<input type="date" value={appointmentDate} onChange={event => setAppointmentDate(event.target.value)}/></label>
-      <label>Start time <small>10:00–{lastStartTime(booking.duration_minutes)}</small><input type="time" min="10:00" max={lastStartTime(booking.duration_minutes)} step="1800" value={appointmentTime} onChange={event => setAppointmentTime(event.target.value)}/></label>
-      <label className="full">Private admin note<textarea rows={2} maxLength={600} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Visible only in the admin panel"/></label>
-    </div>
-    <div className="admin-card-actions"><button className="button small" type="button" disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save changes'}</button><button className="admin-delete" type="button" disabled={busy} onClick={remove}>Delete booking</button></div>
-  </article>;
+  return <tr>
+    <td data-label="Appointment">
+      <strong className="admin-table-date">{prettyDate(appointmentDate)}</strong>
+      <div className="admin-appointment-fields">
+        <input aria-label={'Appointment date for ' + booking.customer_name} type="date" value={appointmentDate} onChange={event => setAppointmentDate(event.target.value)}/>
+        <input aria-label={'Start time for ' + booking.customer_name} type="time" min="10:00" max={lastStartTime(booking.duration_minutes)} step="1800" value={appointmentTime} onChange={event => setAppointmentTime(event.target.value)}/>
+      </div>
+      <small>{booking.duration_minutes} min treatment</small>
+    </td>
+    <td data-label="Customer">
+      <strong className="admin-table-customer">{booking.customer_name}</strong>
+      <a href={'tel:' + booking.phone}>{booking.phone}</a>
+      {booking.email && <a href={'mailto:' + booking.email}>{booking.email}</a>}
+      <small>Ref {booking.id.slice(0, 8).toUpperCase()}</small>
+    </td>
+    <td data-label="Treatment">
+      <strong>{booking.treatment}</strong>
+      {booking.customer_notes && <span className="admin-customer-note" title={booking.customer_notes}>Customer: {booking.customer_notes}</span>}
+    </td>
+    <td data-label="Status">
+      <select className={'admin-status-select ' + status} aria-label={'Status for ' + booking.customer_name} value={status} onChange={event => setStatus(event.target.value as BookingStatus)}>{statuses.map(item => <option key={item} value={item}>{statusLabels[item]}</option>)}</select>
+    </td>
+    <td data-label="Private note">
+      <input className="admin-note-input" aria-label={'Private note for ' + booking.customer_name} maxLength={600} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Add a note"/>
+    </td>
+    <td data-label="Actions">
+      <div className="admin-row-actions"><button className="button admin-save" type="button" disabled={busy} onClick={save}>{busy ? 'Saving...' : 'Save'}</button><button className="admin-delete" type="button" disabled={busy} onClick={remove}>Delete</button></div>
+    </td>
+  </tr>;
 }
 
 export default function AdminPanel() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [notice, setNotice] = useState('');
-  const [from, setFrom] = useState(isoOffset(-90));
-  const [to, setTo] = useState(isoOffset(365));
+  const [from, setFrom] = useState(isoOffset(-365));
+  const [to, setTo] = useState(isoOffset(730));
   const [filter, setFilter] = useState<'all' | BookingStatus>('all');
   const [blockType, setBlockType] = useState<'unavailable' | 'holiday'>('unavailable');
   const [blockStartDate, setBlockStartDate] = useState(isoOffset(1));
@@ -126,6 +146,8 @@ export default function AdminPanel() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const refreshSequence = useRef(0);
   const [manualName, setManualName] = useState('');
   const [manualPhone, setManualPhone] = useState('');
   const [manualEmail, setManualEmail] = useState('');
@@ -136,20 +158,34 @@ export default function AdminPanel() {
   const manualTreatmentDetails = useMemo(() => categories.flatMap(category => category.treatments).find(item => item.name === manualTreatment), [manualTreatment]);
 
   const refresh = useCallback(async (message = '') => {
+    const requestId = ++refreshSequence.current;
     setNotice(message);
+    if (!from || !to || from > to) {
+      setNotice('Choose a valid date range. The From date must be before the To date.');
+      setBookingsLoading(false);
+      return;
+    }
+    setBookingsLoading(true);
     try {
       const data = await api<Overview>('/api/admin/overview?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to));
+      if (requestId !== refreshSequence.current) return;
       setOverview(data);
       setAuthState('ready');
     } catch (error) {
+      if (requestId !== refreshSequence.current) return;
       const typed = error as Error & { status?: number; data?: ApiError };
       if (typed.status === 401) setAuthState('signin');
       else if (typed.status === 503 && typed.data?.error === 'admin_not_configured') setAuthState('unconfigured');
-      else { setAuthState('error'); setNotice(typed.message); }
+      else {
+        setNotice(typed.message);
+        setAuthState(current => current === 'ready' ? current : 'error');
+      }
+    } finally {
+      if (requestId === refreshSequence.current) setBookingsLoading(false);
     }
   }, [from, to]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { const timer = window.setTimeout(() => void refresh(), 180); return () => window.clearTimeout(timer); }, [refresh]);
 
   const visibleBookings = useMemo(() => overview?.bookings.filter(booking => filter === 'all' || booking.status === filter) ?? [], [overview, filter]);
   const stats = useMemo(() => ({
@@ -292,11 +328,16 @@ export default function AdminPanel() {
             <label>From<input type="date" value={from} onChange={event => setFrom(event.target.value)}/></label>
             <label>To<input type="date" value={to} onChange={event => setTo(event.target.value)}/></label>
             <label>Status<select value={filter} onChange={event => setFilter(event.target.value as 'all' | BookingStatus)}><option value="all">All bookings</option>{statuses.map(status => <option key={status} value={status}>{statusLabels[status]}</option>)}</select></label>
-            <button className="button small" type="button" onClick={() => void refresh()}>Refresh</button>
+            <button className="button small" type="button" disabled={bookingsLoading} onClick={() => void refresh()}>{bookingsLoading ? 'Loading...' : 'Refresh'}</button>
           </div>
         </div>
-        <div className="admin-bookings">
-          {visibleBookings.length ? visibleBookings.map(booking => <BookingCard key={booking.id} booking={booking} onChanged={message => void refresh(message)}/>) : <div className="admin-empty">No bookings match this date range and status.</div>}
+        <div className="admin-results-summary"><span>{visibleBookings.length} {visibleBookings.length === 1 ? 'appointment' : 'appointments'}</span><small>{prettyDate(from)} to {prettyDate(to)}</small></div>
+        <div className="admin-bookings-table-wrap" aria-busy={bookingsLoading}>
+          {bookingsLoading && <div className="admin-table-loading" role="status">Updating bookings...</div>}
+          {visibleBookings.length ? <table className="admin-bookings-table">
+            <thead><tr><th>Appointment</th><th>Customer</th><th>Treatment</th><th>Status</th><th>Private note</th><th>Actions</th></tr></thead>
+            <tbody>{visibleBookings.map(booking => <BookingRow key={booking.id} booking={booking} onChanged={message => void refresh(message)}/>)}</tbody>
+          </table> : <div className="admin-empty">No bookings match this date range and status.</div>}
         </div>
       </section>
 

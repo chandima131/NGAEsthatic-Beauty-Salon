@@ -8,7 +8,7 @@ const testSalt = Buffer.alloc(16, 7);
 const testDigest = pbkdf2Sync(testPassword, testSalt, 310_000, 32, 'sha256');
 const testPasswordHash = ['pbkdf2-sha256', 310_000, testSalt.toString('base64url'), testDigest.toString('base64url')].join('$');
 const testSessionSecret = 'local-test-session-secret-with-32-characters';
-const environment = { ...process.env, HOST: '127.0.0.1', PORT: '0', ADMIN_PASSWORD_HASH: testPasswordHash, ADMIN_SESSION_SECRET: testSessionSecret };
+const environment = { ...process.env, HOST: '127.0.0.1', PORT: '0', ADMIN_PASSWORD_HASH: testPasswordHash, ADMIN_SESSION_SECRET: testSessionSecret, BOOKING_DB_PATH: ':memory:' };
 const child = spawn(process.execPath, ['dist/node.mjs'], { env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
 let log = '';
 child.stdout.on('data', chunk => { log += chunk; });

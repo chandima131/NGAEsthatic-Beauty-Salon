@@ -87,6 +87,9 @@ assert.ok(!adminSource.includes('Add available slots') && !adminSource.includes(
 assert.match(adminSource, /Add a customer booking/);
 assert.match(adminSource, /booked through WhatsApp/i);
 assert.match(adminSource, /Monday to Sunday/);
+assert.match(adminSource, /admin-bookings-table/);
+assert.match(adminSource, /refreshSequence/);
+assert.ok(!adminSource.includes('BookingCard'));
 const calendarSource = await readFile('components/BookingCalendar.tsx', 'utf8');
 assert.match(calendarSource, /CHOOSE A TREATMENT/);
 assert.match(calendarSource, /10:00–22:00/);

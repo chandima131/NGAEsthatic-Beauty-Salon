@@ -16,5 +16,6 @@ await build({
 await copyFile('dist/client/index.html', 'dist/template.html');
 await unlink('dist/client/index.html');
 await copyFile('server/node.mjs', 'dist/node.mjs');
+await copyFile('server/node-database.mjs', 'dist/node-database.mjs');
 await writeFile('dist/package.json', JSON.stringify({ type: 'module' }));
 console.log('Built React browser assets, standalone Node.js server, and Sites adapter.');

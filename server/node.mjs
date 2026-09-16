@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, sep, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createNodeDatabase } from './node-database.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 for (const name of ['.env.local', '.env']) {
@@ -14,6 +15,7 @@ const vite = dev ? await (await import('vite')).createServer({ root, appType: 'c
 const production = dev ? null : await import('../dist/server/index.js');
 const template = dev ? null : await readFile(resolve(root, 'dist/template.html'), 'utf8');
 const staticRoot = resolve(root, 'dist/client');
+const bookingDatabase = createNodeDatabase(process.env.BOOKING_DB_PATH || resolve(root, '.data', 'bookings.sqlite'));
 const mimeTypes = { '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff', '.json': 'application/json' };
 
 async function toRequest(req, url) {
@@ -46,6 +48,7 @@ async function serve(req, res) {
     const response = await handler.handleRequest(request, html, {
       ADMIN_PASSWORD_HASH: process.env.ADMIN_PASSWORD_HASH,
       ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
+      DB: bookingDatabase,
     });
     if (response) {
       res.writeHead(response.status, Object.fromEntries(response.headers));
@@ -73,6 +76,6 @@ const server = createServer((req, res) => {
   else void serve(req, res);
 });
 server.listen(port, host, () => console.log('NG Aesthetics React + Node.js: http://' + host + ':' + server.address().port));
-async function shutdown() { await vite?.close(); server.close(); server.closeAllConnections(); }
+async function shutdown() { await vite?.close(); server.close(); server.closeAllConnections(); bookingDatabase.close(); }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
