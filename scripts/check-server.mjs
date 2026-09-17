@@ -102,6 +102,7 @@ try {
   const created = await response.json();
   assert.match(created.booking.reference, /^[0-9A-F]{8}$/);
   assert.equal(created.booking.durationMinutes, 75);
+  assert.equal(created.booking.status, 'confirmed');
 
   response = await fetch(origin + '/api/bookings', { method: 'POST', headers: customerHeaders, body: JSON.stringify(requestBody) });
   assert.equal(response.status, 409);

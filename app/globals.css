@@ -370,13 +370,35 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .booking-submit{width:100%;margin-top:23px}
 .booking-submit:disabled{opacity:.5;cursor:default;transform:none}
 .booking-small{margin-top:13px;font-size:9px;text-align:center}
-.booking-confirmation{max-width:850px;text-align:center}
-.confirmation-mark{display:grid;width:72px;height:72px;place-items:center;margin:0 auto 22px;border-radius:50%;background:var(--rose-5);color:#fff;font-size:30px}
-.booking-confirmation>p:not(.eyebrow):not(.booking-small){max-width:620px;margin:24px auto}
-.confirmation-reference{display:inline-flex;align-items:center;gap:17px;margin-bottom:6px;padding:14px 20px;border:1px solid var(--rose-2);border-radius:5px;background:#fff}
-.confirmation-reference small{color:var(--muted);font-size:8px;letter-spacing:1.5px}
+.booking-modal-backdrop{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:24px;background:#46121FCC;backdrop-filter:blur(8px);animation:booking-backdrop-in .2s ease-out}
+.booking-confirmation-modal{position:relative;width:min(100%,650px);max-height:calc(100vh - 48px);overflow:auto;padding:52px 46px 42px;border:1px solid #F0B9CB;border-radius:20px;background:radial-gradient(circle at 50% 0,#FCEAEC 0,transparent 34%),#FFF8F8;box-shadow:0 32px 90px #25081366;text-align:center;animation:booking-modal-in .28s ease-out}
+.booking-confirmation-modal::before{position:absolute;top:0;right:70px;left:70px;height:3px;background:linear-gradient(90deg,transparent,#D53B70,transparent);content:""}
+.booking-modal-close{position:absolute;top:17px;right:17px;display:grid;width:42px;height:42px;place-items:center;border:1px solid #E6B4C6;border-radius:50%;background:#fff;color:var(--rose-6);font-size:25px;line-height:1}
+.booking-modal-close:hover{border-color:var(--rose-4);background:var(--blush)}
+.confirmation-mark{display:grid;width:76px;height:76px;place-items:center;margin:0 auto 22px;border:5px solid #F8D9E3;border-radius:50%;background:linear-gradient(145deg,var(--rose-3),var(--rose-5));color:#fff;box-shadow:0 12px 28px #B92A5833;font-size:32px}
+.booking-confirmation-modal .eyebrow{margin-bottom:12px;color:var(--rose-4)}
+.booking-confirmation-modal h2{font-size:clamp(38px,5vw,58px)}
+.booking-confirmation-modal>p:not(.eyebrow):not(.booking-small){max-width:500px;margin:16px auto 0}
+.booking-confirmation-details{display:grid;grid-template-columns:1.3fr 1fr .65fr;gap:1px;overflow:hidden;margin:30px 0 18px;border:1px solid #E8C4D0;border-radius:10px;background:#E8C4D0;text-align:left}
+.booking-confirmation-details>div{display:flex;min-width:0;min-height:92px;justify-content:center;flex-direction:column;padding:16px;background:#fff}
+.booking-confirmation-details small,.confirmation-reference small{color:var(--rose-4);font-size:7px;font-weight:800;letter-spacing:1.4px}
+.booking-confirmation-details strong{margin-top:7px;color:var(--rose-7);font-size:11px;line-height:1.45}
+.confirmation-reference{display:inline-flex;align-items:center;gap:17px;margin-bottom:4px;padding:14px 20px;border:1px solid var(--rose-2);border-radius:6px;background:#fff}
 .confirmation-reference strong{color:var(--rose-6);font-size:18px;letter-spacing:2px}
-.booking-confirmation .button{margin-top:26px}
+.booking-confirmation-modal .booking-small{max-width:430px;margin:16px auto 0}
+.booking-modal-done{min-width:180px;margin-top:24px}
+@keyframes booking-backdrop-in{from{opacity:0}to{opacity:1}}
+@keyframes booking-modal-in{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:600px){
+  .booking-modal-backdrop{padding:14px}
+  .booking-confirmation-modal{max-height:calc(100vh - 28px);padding:44px 20px 28px;border-radius:15px}
+  .booking-modal-close{top:12px;right:12px;width:38px;height:38px}
+  .confirmation-mark{width:66px;height:66px;margin-bottom:18px}
+  .booking-confirmation-details{grid-template-columns:1fr;text-align:center}
+  .booking-confirmation-details>div{min-height:auto;padding:13px 15px}
+  .confirmation-reference{width:100%;justify-content:center;flex-direction:column;gap:5px}
+  .booking-modal-done{width:100%}
+}
 
 /* Salon admin */
 .admin-page{min-height:100vh;background:#F9F2F5;color:var(--ink)}

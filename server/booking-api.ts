@@ -209,6 +209,7 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
         email: email || null,
         treatment: treatment.name,
         customerNotes: customerNotes || null,
+        status: 'confirmed',
       });
       return json({
         booking: {

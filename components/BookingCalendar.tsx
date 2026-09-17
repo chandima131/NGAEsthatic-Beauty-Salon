@@ -75,6 +75,21 @@ export default function BookingCalendar() {
   const chosenSlot = availability.slots.find(slot => slot.id === selectedSlot);
 
   useEffect(() => {
+    if (!confirmation) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setConfirmation(null);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.booking-modal-close')?.focus());
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [confirmation]);
+
+  useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get('service');
     if (requested && categories.some(category => category.treatments.some(item => item.name === requested))) setTreatment(requested);
   }, []);
@@ -134,7 +149,7 @@ export default function BookingCalendar() {
         }),
       });
       const data = await response.json() as { booking?: Confirmation; error?: string };
-      if (!response.ok || !data.booking) throw new Error(data.error || 'Unable to request this appointment.');
+      if (!response.ok || !data.booking) throw new Error(data.error || 'Unable to confirm this appointment.');
       setConfirmation(data.booking);
       const bookedStart = timeToMinutes(data.booking.time);
       const bookedEnd = bookedStart + data.booking.durationMinutes;
@@ -147,25 +162,14 @@ export default function BookingCalendar() {
       setTreatment('');
       setSelectedSlot(null);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Unable to request this appointment.');
+      setFormError(error instanceof Error ? error.message : 'Unable to confirm this appointment.');
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (confirmation) return <section className="booking-section" id="booking" aria-labelledby="booking-title">
-    <div className="section booking-confirmation">
-      <span className="confirmation-mark" aria-hidden="true">✓</span>
-      <p className="eyebrow">BOOKING REQUEST RECEIVED</p>
-      <h2 id="booking-title">Thank you.<br/><em>We’ll be in touch.</em></h2>
-      <p>Your request for <strong>{confirmation.treatment}</strong> is saved for <strong>{longDate(confirmation.date)} at {confirmation.time}</strong>.</p>
-      <div className="confirmation-reference"><small>YOUR REFERENCE</small><strong>{confirmation.reference}</strong></div>
-      <p className="booking-small">Your appointment is pending until the salon confirms it with you. Please keep your reference.</p>
-      <button className="button" type="button" onClick={() => setConfirmation(null)}>Book another appointment</button>
-    </div>
-  </section>;
-
-  return <section className="booking-section" id="booking" aria-labelledby="booking-title">
+  return <>
+    <section className="booking-section" id="booking" aria-labelledby="booking-title">
     <div className="section">
       <div className="booking-heading">
         <div>
@@ -237,13 +241,13 @@ export default function BookingCalendar() {
               <strong>{slot.time}</strong><small>{slot.durationMinutes} min</small>
             </button>)}
           </div> : <p className="time-empty">Available times will appear here after you choose a highlighted date.</p>}
-          <div className="booking-promise"><span aria-hidden="true">♡</span><p><strong>Your time is held when the request is submitted.</strong><br/>The salon will contact you to confirm the appointment.</p></div>
+          <div className="booking-promise"><span aria-hidden="true">♡</span><p><strong>Your selected time is reserved when the booking is confirmed.</strong><br/>Your confirmation and booking reference will appear as soon as the booking is saved.</p></div>
         </div>
       </div>
 
       <form className="booking-form" onSubmit={submit}>
         <div className="booking-form-heading">
-          <div><p className="eyebrow">STEP 3 · YOUR DETAILS</p><h3>Complete your request</h3></div>
+          <div><p className="eyebrow">STEP 3 · YOUR DETAILS</p><h3>Complete your booking</h3></div>
           <p>{chosenSlot ? longDate(chosenSlot.date) + ' · ' + chosenSlot.time : 'Choose a date and time above'}</p>
         </div>
         <div className="booking-form-grid">
@@ -256,9 +260,39 @@ export default function BookingCalendar() {
           <label className="booking-honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off"/></label>
         </div>
         {formError && <p className="booking-form-error" role="alert">{formError}</p>}
-        <button className="button booking-submit" type="submit" disabled={!selectedSlot || submitting}>{submitting ? 'Saving your request…' : 'Request appointment'} <span aria-hidden="true">→</span></button>
-        <p className="booking-small">This sends a booking request. Your appointment is confirmed only after the salon contacts you.</p>
+        <button className="button booking-submit" type="submit" disabled={!selectedSlot || submitting}>{submitting ? 'Confirming your booking…' : 'Confirm booking'} <span aria-hidden="true">→</span></button>
+        <p className="booking-small">Your appointment is confirmed immediately after a successful submission.</p>
       </form>
     </div>
-  </section>;
+  </section>
+    {confirmation && <div
+      className="booking-modal-backdrop"
+      role="presentation"
+      onMouseDown={event => {
+        if (event.target === event.currentTarget) setConfirmation(null);
+      }}
+    >
+      <div
+        className="booking-confirmation-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="booking-confirmation-title"
+        aria-describedby="booking-confirmation-description"
+      >
+        <button className="booking-modal-close" type="button" aria-label="Close booking confirmation" onClick={() => setConfirmation(null)}>×</button>
+        <span className="confirmation-mark" aria-hidden="true">✓</span>
+        <p className="eyebrow">APPOINTMENT CONFIRMED</p>
+        <h2 id="booking-confirmation-title">Booking confirmed.</h2>
+        <p id="booking-confirmation-description">Your appointment has been successfully booked. We look forward to welcoming you.</p>
+        <div className="booking-confirmation-details">
+          <div><small>TREATMENT</small><strong>{confirmation.treatment}</strong></div>
+          <div><small>DATE</small><strong>{longDate(confirmation.date)}</strong></div>
+          <div><small>TIME</small><strong>{confirmation.time}</strong></div>
+        </div>
+        <div className="confirmation-reference"><small>BOOKING REFERENCE</small><strong>{confirmation.reference}</strong></div>
+        <p className="booking-small">Please keep your booking reference. Contact the salon if you need to make a change.</p>
+        <button className="button booking-modal-done" type="button" onClick={() => setConfirmation(null)}>Done</button>
+      </div>
+    </div>}
+  </>;
 }
