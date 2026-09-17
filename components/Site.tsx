@@ -20,7 +20,7 @@ function bookingLink(treatment: string) {
 
 function CategoryPrices({ category, index }: { category: Category; index: number }) {
   return <details className="price-category" open={index < 2} id={'prices-' + category.slug}>
-    <summary><span><small>{String(index + 1).padStart(2, '0')}</small>{category.slug === 'beauty-treatments' ? 'Brows & Lashes' : category.name}</span><span className="summary-mark" aria-hidden="true">+</span></summary>
+    <summary><span><small>{String(index + 1).padStart(2, '0')}</small>{category.name}</span><span className="summary-mark" aria-hidden="true">+</span></summary>
     <div className="category-content">
       <p className="category-intro">{category.description}</p>
       <div className="compact-price-list">

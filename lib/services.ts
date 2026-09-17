@@ -1,23 +1,151 @@
-export type Treatment = { name: string; price: number; durationMinutes: number; description?: string };
-export type Category = { slug: string; name: string; subtitle: string; description: string; image: string; alt: string; note?: string; treatments: Treatment[] };
+export type Treatment = {
+  name: string;
+  price: number;
+  durationMinutes: number;
+  description?: string;
+};
+
+export type Category = {
+  slug: string;
+  name: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  alt: string;
+  note?: string;
+  treatments: Treatment[];
+};
+
 export const categories: Category[] = [
-{slug:'facials',name:'Facials',subtitle:'A moment for your skin',description:'Explore our facial menu, from a simple appointment to a more indulgent ritual. We will help you choose a treatment to suit your preferences.',image:'facial',alt:'Illustrative photograph of a relaxing facial treatment',treatments:[
-{name:'Microneedling Facial',price:45,durationMinutes:60,description:'A microneedling facial appointment. Contact us to discuss suitability.'},
-{name:'Microneedling Luxury Facial',price:60,durationMinutes:75,description:'Our luxury microneedling facial option. Enquire about what is included.'},
-{name:'Deluxe Hydro Facial',price:80,durationMinutes:75,description:'Our deluxe hydro facial option for a little extra time for yourself.'},
-{name:'Hydro Dermabrasion Facial',price:45,durationMinutes:60,description:'A hydro dermabrasion facial appointment tailored through consultation.'},
-{name:'Acne Hydro Facial with LED Therapy',price:50,durationMinutes:75,description:'A hydro facial with LED therapy. Discuss your skin and suitability before booking.'},
-{name:'Diamond Microdermabrasion with Jelly Mask',price:65,durationMinutes:75,description:'Diamond microdermabrasion paired with a jelly mask.'},
-{name:'Mesotherapy Treatment',price:50,durationMinutes:60,description:'Please contact us for treatment details and suitability information.'},
-{name:'Basic Dermabrasion Facial',price:35,durationMinutes:45,description:'Our basic dermabrasion facial option.'},
-{name:'Gold Facial with 24K Gold Particles',price:45,durationMinutes:60,description:'A facial featuring 24K gold particles.'}]},
-{slug:'skin-boosters',name:'Skin Boosters',subtitle:'Skin care, considered',description:'Choose from single appointments or a course of sessions. Talk to us about your preferences and suitability before arranging a treatment.',image:'facial',alt:'Illustrative facial and skin care photograph',note:'Contact us for a consultation to discuss suitability and the details of your treatment.',treatments:[{name:'1 Session',price:90,durationMinutes:45},{name:'2 Sessions',price:180,durationMinutes:45},{name:'3 Sessions',price:250,durationMinutes:45}]},
-{slug:'fat-dissolving',name:'Fat Dissolving',subtitle:'Begin with a conversation',description:'Small and large area options are available. A consultation helps us discuss your requirements and whether a treatment is suitable for you.',image:'hero-beauty-salon',alt:'Illustrative private treatment room',note:"Not sure which option is suitable? Contact us before booking and we’ll discuss your treatment requirements.",treatments:[{name:'1 Small Area',price:60,durationMinutes:45},{name:'2 Small Areas',price:100,durationMinutes:60},{name:'3 Small Areas',price:140,durationMinutes:75},{name:'1 Large Area',price:100,durationMinutes:60},{name:'2 Large Areas',price:175,durationMinutes:75},{name:'3 Large Areas',price:250,durationMinutes:90}]},
-{slug:'chemical-peels',name:'Chemical Peels',subtitle:'Time to talk skin',description:'Our chemical peel options include Pure Peel, Refresh Peel and Glow Peel. Enquire to discuss the options and suitability for your skin.',image:'facial',alt:'Illustrative beauty and skin treatment photograph',note:'Pure, Refresh and Glow are available options. Individual option prices have not been supplied; please confirm your selected treatment with us.',treatments:[{name:'Chemical Peel',price:60,durationMinutes:45}]},
-{slug:'beauty-treatments',name:'Beauty Treatments',subtitle:'The finishing touches',description:'From beautifully shaped brows to lash tinting, make a little space for the details. Explore our Brows & Lashes menu below.',image:'makeup',alt:'Illustrative beauty portrait with defined brows',note:'High Definition Brows includes eyebrow tint, waxing or threading, shaping and makeup. Ask us about any preparation or patch testing needed before your appointment.',treatments:[{name:'Eyebrow Tint',price:6,durationMinutes:15},{name:'Eyelash Tint',price:6,durationMinutes:30},{name:'High Definition Brows',price:20,durationMinutes:60}]},
-{slug:'makeup',name:'Makeup',subtitle:'For your special moments',description:'From a celebration to your wedding day, discover party and bridal makeup that feels like you. A bridal trial gives us time to explore your preferred look together.',image:'makeup',alt:'Illustrative elegant occasion makeup portrait',treatments:[{name:'Party Makeup with Lashes',price:30,durationMinutes:60},{name:'Bridal Makeup',price:250,durationMinutes:120},{name:'Bridal Makeup Trial',price:40,durationMinutes:60}]},
-{slug:'threading-tinting',name:'Threading & Tinting',subtitle:'Beautifully defined',description:'Choose a full face or focused threading appointment. For eyebrow and eyelash tint prices, explore our Brows & Lashes menu.',image:'makeup',alt:'Illustrative portrait showing detailed brow styling',treatments:[{name:'Full Face Threading including Eyebrows',price:15,durationMinutes:45},{name:'Eyebrow Threading',price:8,durationMinutes:15},{name:'Upper Lip Threading',price:3,durationMinutes:15}]},
-{slug:'waxing',name:'Waxing',subtitle:'Your regular beauty ritual',description:'A straightforward menu of face and body waxing appointments in Hattersley, Hyde. Choose the areas you would like to book below.',image:'hero-beauty-salon',alt:'Illustrative clean private beauty treatment room',treatments:[{name:'Full Body Wax, bikini not included',price:50,durationMinutes:120},{name:'Full Legs Wax',price:20,durationMinutes:60},{name:'Half Legs Wax',price:12,durationMinutes:45},{name:'Full Arms Wax',price:12,durationMinutes:45},{name:'Half Arms Wax',price:8,durationMinutes:30},{name:'Full Face with Eyebrows Wax',price:15,durationMinutes:45},{name:'Eyebrow Wax',price:6,durationMinutes:15},{name:'Upper Lip Wax',price:3,durationMinutes:15}]},
-{slug:'vitamin-b12',name:'Vitamin B12',subtitle:'Suitability comes first',description:'Please contact NG Aesthetics & Beauty Lab for suitability and consultation information before booking a Vitamin B12 appointment.',image:'hero-beauty-salon',alt:'Illustrative welcoming consultation environment',note:'No health outcomes are promised. Contact us to discuss suitability and appointment information.',treatments:[{name:'1 Shot',price:20,durationMinutes:15},{name:'2 Shots',price:35,durationMinutes:30}]}
+  {
+    slug: 'aesthetic-treatments',
+    name: 'Aesthetic Treatments',
+    subtitle: 'Professional care, tailored to you',
+    description:
+      'Explore our consultation-led aesthetic treatments and choose the option that best suits your goals.',
+    image: 'facial',
+    alt: 'Illustrative photograph of an aesthetic skin treatment',
+    note:
+      'Microneedling includes a facial, steam and mask. Luxury Microneedling is a 1 hour 20 minute session with a head and shoulder massage, facial and steam.',
+    treatments: [
+      { name: 'Anti-Wrinkle Injection - 1 Area', price: 90, durationMinutes: 30 },
+      { name: 'Anti-Wrinkle Injection - 2 Areas', price: 150, durationMinutes: 30 },
+      { name: 'Anti-Wrinkle Injection - 3 Areas', price: 200, durationMinutes: 45 },
+      { name: 'Vitamin B12 Injection', price: 25, durationMinutes: 15 },
+      { name: 'Skin Booster', price: 100, durationMinutes: 45 },
+      { name: 'Profhilo - 1 Session', price: 150, durationMinutes: 45 },
+      { name: 'Profhilo - 2 Sessions', price: 250, durationMinutes: 45 },
+      { name: 'Profhilo - 3 Sessions', price: 350, durationMinutes: 45 },
+      { name: 'Mesotherapy', price: 60, durationMinutes: 60 },
+      { name: 'Microneedling', price: 70, durationMinutes: 75 },
+      { name: 'Luxury Microneedling', price: 100, durationMinutes: 80 },
+    ],
+  },
+  {
+    slug: 'facials',
+    name: 'Facial Treatments',
+    subtitle: 'Fresh, polished, glowing skin',
+    description:
+      'Choose from focused skin treatments and relaxing facials designed to leave your complexion refreshed.',
+    image: 'facial',
+    alt: 'Illustrative photograph of a relaxing facial treatment',
+    note:
+      'All facial treatments include double cleansing, instant peel, massage, steam, blackhead removal, a mask, glow serum and SPF 50.',
+    treatments: [
+      { name: 'Hydra Facial', price: 70, durationMinutes: 60 },
+      { name: 'Hydra Facial - Course of 3', price: 180, durationMinutes: 60 },
+      { name: 'Microdermabrasion', price: 50, durationMinutes: 60 },
+      { name: 'Gold Facial', price: 45, durationMinutes: 60 },
+      { name: 'Dermaplaning Facial', price: 45, durationMinutes: 60 },
+      { name: 'Basic Facial', price: 30, durationMinutes: 45 },
+      { name: 'Skin Polish', price: 8, durationMinutes: 15 },
+    ],
+  },
+  {
+    slug: 'waxing',
+    name: 'Waxing',
+    subtitle: 'Smooth, carefully finished results',
+    description:
+      'A complete menu of face and body waxing treatments, from quick finishing touches to a full body appointment.',
+    image: 'hero-beauty-salon',
+    alt: 'Illustrative clean private beauty treatment room',
+    treatments: [
+      { name: 'Full Body Waxing (Bikini Not Included)', price: 50, durationMinutes: 120 },
+      { name: 'Full Legs Wax', price: 25, durationMinutes: 60 },
+      { name: 'Half Legs Wax', price: 15, durationMinutes: 45 },
+      { name: 'Full Arms Wax', price: 15, durationMinutes: 45 },
+      { name: 'Half Arms Wax', price: 10, durationMinutes: 30 },
+      { name: 'Underarm Wax', price: 6, durationMinutes: 15 },
+      { name: 'Full Face Wax', price: 20, durationMinutes: 45 },
+      { name: 'Eyebrow Wax', price: 7, durationMinutes: 15 },
+      { name: 'Side of Face Wax', price: 6, durationMinutes: 15 },
+      { name: 'Neck Wax', price: 5, durationMinutes: 15 },
+      { name: 'Upper Lip Wax', price: 3, durationMinutes: 15 },
+      { name: 'Chin Wax', price: 3, durationMinutes: 15 },
+      { name: 'Forehead Wax', price: 3, durationMinutes: 15 },
+    ],
+  },
+  {
+    slug: 'tint',
+    name: 'Tint',
+    subtitle: 'Defined brows and lashes',
+    description:
+      'Enhance your brows and lashes with polished tinting treatments for a naturally defined finish.',
+    image: 'makeup',
+    alt: 'Illustrative beauty portrait with defined brows and lashes',
+    treatments: [
+      { name: 'Eyebrow Tint', price: 7, durationMinutes: 15 },
+      { name: 'Eyelash Tint', price: 7, durationMinutes: 30 },
+      { name: 'Eyebrow & Lash Tint', price: 13, durationMinutes: 30 },
+      { name: 'High Definition Brows', price: 20, durationMinutes: 60 },
+    ],
+  },
+  {
+    slug: 'threading',
+    name: 'Threading',
+    subtitle: 'Clean lines and precise shaping',
+    description:
+      'Precise facial threading for tidy brows, smooth skin and beautifully finished facial contours.',
+    image: 'makeup',
+    alt: 'Illustrative portrait showing detailed brow styling',
+    treatments: [
+      { name: 'Full Face Threading including Brows', price: 20, durationMinutes: 45 },
+      { name: 'Eyebrow Threading', price: 6, durationMinutes: 15 },
+      { name: 'Upper Lip Threading', price: 3, durationMinutes: 15 },
+      { name: 'Chin Threading', price: 3, durationMinutes: 15 },
+      { name: 'Forehead Threading', price: 3, durationMinutes: 15 },
+    ],
+  },
+  {
+    slug: 'lashes',
+    name: 'Lashes',
+    subtitle: 'Lifted, glossy, effortless lashes',
+    description:
+      'Low-maintenance lash treatments that enhance your natural lashes with lift and definition.',
+    image: 'makeup',
+    alt: 'Illustrative beauty portrait with lifted lashes',
+    treatments: [
+      { name: 'Lash Lamination', price: 20, durationMinutes: 45 },
+      { name: 'Lash Lift & Tint', price: 25, durationMinutes: 60 },
+    ],
+  },
+  {
+    slug: 'makeup',
+    name: 'Makeup',
+    subtitle: 'A polished look for your occasion',
+    description:
+      'Professional party makeup with lashes for a confident, photo-ready finish.',
+    image: 'makeup',
+    alt: 'Illustrative elegant party makeup portrait',
+    treatments: [
+      { name: 'Party Makeup with Lashes', price: 45, durationMinutes: 75 },
+    ],
+  },
 ];
-export const priceDisclaimer = 'Treatment availability and prices may change. Please contact NG Aesthetics & Beauty Lab to confirm your appointment and treatment.';
+
+export const treatments = categories.flatMap((category) =>
+  category.treatments.map((treatment) => ({ ...treatment, category: category.name })),
+);
+
+export const priceDisclaimer =
+  'Treatment availability and prices may change. Please contact NG Aesthetics & Beauty Lab to confirm your appointment and treatment.';

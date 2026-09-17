@@ -8,22 +8,22 @@ export const galleryImages = [
   },
   {
     "src": "/images/gallery/dermaplaning-glow-facial.png",
-    "title": "Dermaplaning + Glow Facial",
-    "alt": "Dermaplaning + Glow Facial treatment artwork with side-by-side before and after panels",
+    "title": "Dermaplaning Facial",
+    "alt": "Dermaplaning Facial treatment artwork with side-by-side before and after panels",
     "width": 1448,
     "height": 1086
   },
   {
     "src": "/images/gallery/brow-transformation.png",
-    "title": "Brow Transformation",
-    "alt": "Brow Transformation treatment artwork with side-by-side before and after panels",
+    "title": "High Definition Brows",
+    "alt": "High Definition Brows treatment artwork with side-by-side before and after panels",
     "width": 1448,
     "height": 1086
   },
   {
     "src": "/images/gallery/hydrafacial-microneedling.png",
-    "title": "HydraFacial + Microneedling",
-    "alt": "HydraFacial + Microneedling treatment artwork with side-by-side before and after panels",
+    "title": "Hydra Facial + Microneedling",
+    "alt": "Hydra Facial + Microneedling treatment artwork with side-by-side before and after panels",
     "width": 1448,
     "height": 1086
   }

@@ -77,7 +77,7 @@ try {
   target.setDate(target.getDate() + 3);
   const date = isoDate(target);
   const month = date.slice(0, 7);
-  const treatment = 'Microneedling Facial';
+  const treatment = 'Microneedling';
   const availabilityUrl = origin + '/api/availability?month=' + month + '&treatment=' + encodeURIComponent(treatment);
   const adminHeaders = { 'Content-Type': 'application/json', Cookie: adminCookie, Origin: origin };
 
@@ -87,12 +87,12 @@ try {
   response = await fetch(availabilityUrl);
   let availability = await response.json();
   assert.equal(response.status, 200);
-  assert.equal(availability.durationMinutes, 60);
+  assert.equal(availability.durationMinutes, 75);
   assert.deepEqual(availability.openingHours, { days: 'Monday to Sunday', opens: '10:00', closes: '22:00' });
   const targetSlots = availability.slots.filter(slot => slot.date === date);
-  assert.equal(targetSlots.length, 23);
+  assert.equal(targetSlots.length, 22);
   assert.equal(targetSlots[0].time, '10:00');
-  assert.equal(targetSlots.at(-1).time, '21:00');
+  assert.equal(targetSlots.at(-1).time, '20:30');
   const selected = targetSlots[0];
 
   const customerHeaders = { 'Content-Type': 'application/json', Origin: origin };
@@ -101,22 +101,22 @@ try {
   assert.equal(response.status, 201);
   const created = await response.json();
   assert.match(created.booking.reference, /^[0-9A-F]{8}$/);
-  assert.equal(created.booking.durationMinutes, 60);
+  assert.equal(created.booking.durationMinutes, 75);
 
   response = await fetch(origin + '/api/bookings', { method: 'POST', headers: customerHeaders, body: JSON.stringify(requestBody) });
   assert.equal(response.status, 409);
 
   availability = await (await fetch(availabilityUrl)).json();
   const remainingTimes = availability.slots.filter(slot => slot.date === date).map(slot => slot.time);
-  assert.ok(!remainingTimes.includes('10:00') && !remainingTimes.includes('10:30'));
-  assert.ok(remainingTimes.includes('11:00'));
+  assert.ok(!remainingTimes.includes('10:00') && !remainingTimes.includes('10:30') && !remainingTimes.includes('11:00'));
+  assert.ok(remainingTimes.includes('11:30'));
 
   response = await fetch(origin + '/api/admin/overview?from=' + date + '&to=' + date, { headers: adminHeaders });
   let overview = await response.json();
   assert.equal(response.status, 200);
   assert.equal(overview.bookings.length, 1);
   assert.equal(overview.bookings[0].customer_name, 'Test Customer');
-  assert.equal(overview.bookings[0].duration_minutes, 60);
+  assert.equal(overview.bookings[0].duration_minutes, 75);
   assert.ok(!('slots' in overview));
   const bookingId = overview.bookings[0].id;
 
@@ -139,7 +139,7 @@ try {
   assert.equal(response.status, 200);
 
   availability = await (await fetch(availabilityUrl)).json();
-  assert.equal(availability.slots.filter(slot => slot.date === date).length, 23);
+  assert.equal(availability.slots.filter(slot => slot.date === date).length, 22);
   assert.equal((await fetch(origin + '/api/admin/slots', { method: 'POST', headers: adminHeaders, body: '{}' })).status, 404);
 
   response = await fetch(origin + '/api/admin/bookings', {

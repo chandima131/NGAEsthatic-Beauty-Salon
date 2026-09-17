@@ -4,20 +4,22 @@ import { categories } from '../lib/services.ts';
 
 const origin = process.env.TEST_ORIGIN || 'http://localhost:3000';
 const expected = {
-  facials:[45,60,80,45,50,65,50,35,45],
-  'skin-boosters':[90,180,250],
-  'fat-dissolving':[60,100,140,100,175,250],
-  'chemical-peels':[60],
-  'beauty-treatments':[6,6,20],
-  makeup:[30,250,40],
-  'threading-tinting':[15,8,3],
-  waxing:[50,20,12,12,8,15,6,3],
-  'vitamin-b12':[20,35],
+  'aesthetic-treatments':[90,150,200,25,100,150,250,350,60,70,100],
+  facials:[70,180,50,45,45,30,8],
+  waxing:[50,25,15,15,10,6,20,7,6,5,3,3,3],
+  tint:[7,7,13,20],
+  threading:[20,6,3,3,3],
+  lashes:[20,25],
+  makeup:[45],
 };
+assert.deepEqual(categories.map(category => category.slug), Object.keys(expected));
 for (const category of categories) assert.deepEqual(category.treatments.map(treatment => treatment.price), expected[category.slug], `Prices differ from business brief: ${category.slug}`);
 const treatments = categories.flatMap(category => category.treatments);
-assert.equal(treatments.length, 38);
-assert.ok(treatments.every(treatment => treatment.durationMinutes >= 15 && treatment.durationMinutes <= 120 && treatment.durationMinutes % 15 === 0));
+assert.equal(treatments.length, 43);
+for (const removed of ['Fat Dissolving', 'Chemical Peel', 'Bridal Makeup', 'Bridal Makeup Trial', 'Deluxe Hydro Facial']) {
+  assert.ok(!treatments.some(treatment => treatment.name === removed), `Removed treatment is still listed: ${removed}`);
+}
+assert.ok(treatments.every(treatment => treatment.durationMinutes >= 15 && treatment.durationMinutes <= 120 && treatment.durationMinutes % 5 === 0));
 
 const response = await fetch(origin);
 assert.equal(response.status, 200);
@@ -65,7 +67,7 @@ for (const [, href] of html.matchAll(/<a\b[^>]*href="([^"]+)"/g)) {
   if (href.startsWith('tel:')) assert.equal(href, 'tel:+447801247820');
   if (href.startsWith('https://wa.me/')) assert.ok(href.startsWith('https://wa.me/447801247820?text='));
 }
-assert.ok(!/lorem ipsum|ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢|ÃƒÂ¢Ã¢â‚¬Â |ÃƒÂ¢Ã…â€œ|Ãƒâ€šÃ‚Â£|Ã¯Â¿Â½/i.test(html), 'Placeholder or encoding issue');
+assert.ok(!/lorem ipsum|\uFFFD|\u00C3|\u00C2\u00A3/i.test(html), 'Placeholder or encoding issue');
 const redirects = {'/about':'/#about','/treatments':'/#services','/prices':'/#services','/gallery':'/#gallery','/contact':'/#contact','/privacy':'/#privacy','/treatments/facials':'/#services'};
 for (const [path, location] of Object.entries(redirects)) {
   const redirect = await fetch(origin + path, { redirect: 'manual' });
@@ -92,7 +94,7 @@ assert.match(adminSource, /refreshSequence/);
 assert.ok(!adminSource.includes('BookingCard'));
 const calendarSource = await readFile('components/BookingCalendar.tsx', 'utf8');
 assert.match(calendarSource, /CHOOSE A TREATMENT/);
-assert.match(calendarSource, /10:00–22:00/);
+assert.match(calendarSource, /10:00\u201322:00/);
 const css = await readFile('app/globals.css','utf8');
 const floralSource = await readFile('components/FloralDecor.tsx','utf8');
 for (const colour of ['#EC9EB8','#DC7097','#D53B70','#B92A58','#8B2257','#691936','#46121F','#FFF8F8','#FCEAEC','#F6CCD6','#E9A7B6','#C85A78','#B98A77','#70836B']) assert.ok(css.includes(colour) || floralSource.includes(colour), colour);
@@ -109,6 +111,6 @@ assert.match(css,/:focus-visible/);
 for (const dir of ['app','components','lib']) for (const path of await readdir(dir,{recursive:true})) {
   if (!/\.(tsx?|css)$/.test(path)) continue;
   const source = await readFile(`${dir}/${path}`,'utf8');
-  assert.ok(!/ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢|ÃƒÂ¢Ã¢â‚¬Â |ÃƒÂ¢Ã…â€œ|Ãƒâ€šÃ‚Â£|Ã¯Â¿Â½/.test(source), `Encoding ${dir}/${path}`);
+  assert.ok(!/\uFFFD|\u00C3|\u00C2\u00A3/.test(source), `Encoding ${dir}/${path}`);
 }
-console.log('PASS: one page, 38 supplied prices and realistic durations, automatic-hours booking UI, metadata, assets, and pink palette.');
+console.log('PASS: one page, 43 current supplied prices and realistic durations, automatic-hours booking UI, metadata, assets, and pink palette.');

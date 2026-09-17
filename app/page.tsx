@@ -40,7 +40,7 @@ export default function Home() {
       <FloralDecor/>
       <div className="section">
         <div className="services-heading">
-          <SectionHeading eyebrow="SERVICES & PRICE LIST" title={<>Everything you need to<br/><em>feel beautifully you.</em></>} copy="Explore every treatment and confirmed price in one place. Open a category to see its full menu, then book straight through WhatsApp."/>
+          <SectionHeading eyebrow="SERVICES & PRICE LIST" title={<>Everything you need to<br/><em>feel beautifully you.</em></>} copy="Explore every treatment and confirmed price in one place. Open a category to see its full menu, then choose your appointment online."/>
           <div className="service-collage" aria-label="Illustrative salon and treatment imagery">
             <div><Photo name="facial" alt="Illustrative facial treatment"/></div><div><Photo name="makeup" alt="Illustrative occasion makeup"/></div><div><Photo name="hero-beauty-salon" alt="Illustrative beauty treatment room"/></div>
           </div>

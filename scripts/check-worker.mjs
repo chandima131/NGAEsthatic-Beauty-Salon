@@ -25,13 +25,13 @@ const asset = await worker.fetch(new Request('https://example.test/images/logo.j
 assert.equal(await asset.text(), 'asset');
 const missingTreatment = await worker.fetch(new Request('https://example.test/api/availability?month=2026-10'), env);
 assert.equal(missingTreatment.status, 400);
-const availability = await worker.fetch(new Request('https://example.test/api/availability?month=2026-10&treatment=Bridal%20Makeup'), env);
+const availability = await worker.fetch(new Request('https://example.test/api/availability?month=2026-10&treatment=Luxury%20Microneedling'), env);
 assert.equal(availability.status, 200);
 const availabilityData = await availability.json();
-assert.equal(availabilityData.durationMinutes, 120);
+assert.equal(availabilityData.durationMinutes, 80);
 assert.deepEqual(availabilityData.openingHours, { days: 'Monday to Sunday', opens: '10:00', closes: '22:00' });
 assert.ok(availabilityData.slots.length > 0);
-assert.ok(availabilityData.slots.every(slot => slot.durationMinutes === 120));
+assert.ok(availabilityData.slots.every(slot => slot.durationMinutes === 80));
 const anonymousAdmin = await worker.fetch(new Request('https://example.test/api/admin/overview'), env);
 assert.equal(anonymousAdmin.status, 401);
 const login = await worker.fetch(new Request('https://example.test/api/admin/login', {
