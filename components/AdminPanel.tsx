@@ -308,7 +308,7 @@ export default function AdminPanel() {
       </div>
 
       <section className="admin-section manual-booking-section" aria-labelledby="manual-booking-title">
-        <div className="admin-section-heading"><div><p className="eyebrow">DIRECT BOOKINGS</p><h2 id="manual-booking-title">Add a customer booking</h2><p>Use this when a customer books with you by WhatsApp, phone, social media, or another message. The appointment is added as confirmed.</p></div><span className="status-pill confirmed">CONFIRMED</span></div>
+        <div className="admin-section-heading"><div><p className="eyebrow">DIRECT BOOKINGS</p><h2 id="manual-booking-title">Add a customer booking</h2><p>Use this when a customer books with you by WhatsApp, phone, social media, or another message. The appointment is added as confirmed. Add only customers who agreed to receive booking updates by SMS.</p></div><span className="status-pill confirmed">CONFIRMED</span></div>
         <form className="admin-manual-booking-form" onSubmit={addManualBooking}>
           <label>Customer name <span>*</span><input required maxLength={80} autoComplete="off" value={manualName} onChange={event => setManualName(event.target.value)}/></label>
           <label>Phone number <span>*</span><input required maxLength={30} inputMode="tel" placeholder="+44" value={manualPhone} onChange={event => setManualPhone(event.target.value)}/></label>

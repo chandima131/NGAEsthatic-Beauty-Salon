@@ -112,6 +112,7 @@ export class BookingNotFoundError extends Error {
 export interface BookingStore {
   getAvailability(from: string, to: string, durationMinutes: number): Promise<{ slots: AvailableSlot[]; blackouts: BlackoutRecord[] }>;
   getOverview(from: string, to: string): Promise<AdminOverview>;
+  getBooking(id: string): Promise<BookingView | null>;
   addBlackout(input: BlackoutInput): Promise<BlackoutRecord>;
   removeBlackout(id: number): Promise<boolean>;
   createBooking(input: BookingInput): Promise<BookingView>;
@@ -317,7 +318,7 @@ class D1BookingStore implements BookingStore {
     return Number(result.meta?.changes ?? 0) > 0;
   }
 
-  private async getBooking(id: string) {
+  async getBooking(id: string) {
     return await this.first<BookingView>(`SELECT b.*, s.slot_date, s.start_time
       FROM bookings b JOIN availability_slots s ON s.id = b.slot_id WHERE b.id = ?`, id);
   }
@@ -443,6 +444,10 @@ class MemoryBookingStore implements BookingStore {
     };
   }
 
+  async getBooking(id: string) {
+    const booking = this.bookings.find(item => item.id === id);
+    return booking ? this.view(booking) : null;
+  }
   async addBlackout(input: BlackoutInput) {
     const blackout: BlackoutRecord = { id: this.nextBlackoutId++, start_date: input.startDate, end_date: input.endDate, start_time: input.startTime, end_time: input.endTime, type: input.type, label: input.label, created_at: new Date().toISOString() };
     this.blackouts.push(blackout);

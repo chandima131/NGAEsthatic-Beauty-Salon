@@ -48,6 +48,11 @@ async function serve(req, res) {
     const response = await handler.handleRequest(request, html, {
       ADMIN_PASSWORD_HASH: process.env.ADMIN_PASSWORD_HASH,
       ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
+      TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+      TWILIO_MESSAGING_SERVICE_SID: process.env.TWILIO_MESSAGING_SERVICE_SID,
+      TWILIO_FROM_NUMBER: process.env.TWILIO_FROM_NUMBER,
+      TWILIO_OWNER_NUMBER: process.env.TWILIO_OWNER_NUMBER,
       DB: bookingDatabase,
     });
     if (response) {

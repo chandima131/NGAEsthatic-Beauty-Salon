@@ -252,11 +252,11 @@ export default function BookingCalendar() {
         </div>
         <div className="booking-form-grid">
           <label>Your name <span>*</span><input name="customerName" required maxLength={80} autoComplete="name"/></label>
-          <label>Phone number <span>*</span><input name="phone" required maxLength={30} inputMode="tel" autoComplete="tel" placeholder="+44"/></label>
+          <label>Mobile number <span>*</span><input name="phone" required maxLength={30} inputMode="tel" autoComplete="tel" placeholder="+44"/></label>
           <label>Email <small>optional</small><input name="email" type="email" maxLength={120} autoComplete="email"/></label>
           <div className="booking-treatment-summary"><small>TREATMENT</small><strong>{selectedTreatment?.name || 'Choose a treatment above'}</strong><span>{selectedTreatment ? selectedTreatment.durationMinutes + ' min' : ''}</span><input type="hidden" name="treatment" value={treatment}/></div>
           <label className="full">Anything we should know? <small>optional — do not include medical details</small><textarea name="customerNotes" rows={4} maxLength={500} placeholder="A short appointment note"/></label>
-          <label className="booking-consent full"><input type="checkbox" name="consent" value="yes" required/><span>I agree that my details can be stored and used to arrange this appointment. <a href="#privacy">Read privacy information.</a></span></label>
+          <label className="booking-consent full"><input type="checkbox" name="consent" value="yes" required/><span>I agree that my details can be stored and used to arrange this appointment and send booking updates by SMS. <a href="#privacy">Read privacy information.</a></span></label>
           <label className="booking-honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off"/></label>
         </div>
         {formError && <p className="booking-form-error" role="alert">{formError}</p>}

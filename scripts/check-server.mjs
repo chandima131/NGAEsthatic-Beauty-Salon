@@ -8,7 +8,8 @@ const testSalt = Buffer.alloc(16, 7);
 const testDigest = pbkdf2Sync(testPassword, testSalt, 310_000, 32, 'sha256');
 const testPasswordHash = ['pbkdf2-sha256', 310_000, testSalt.toString('base64url'), testDigest.toString('base64url')].join('$');
 const testSessionSecret = 'local-test-session-secret-with-32-characters';
-const environment = { ...process.env, HOST: '127.0.0.1', PORT: '0', ADMIN_PASSWORD_HASH: testPasswordHash, ADMIN_SESSION_SECRET: testSessionSecret, BOOKING_DB_PATH: ':memory:' };
+const testTwilioToken = 'local-test-twilio-token';
+const environment = { ...process.env, HOST: '127.0.0.1', PORT: '0', ADMIN_PASSWORD_HASH: testPasswordHash, ADMIN_SESSION_SECRET: testSessionSecret, TWILIO_AUTH_TOKEN: testTwilioToken, BOOKING_DB_PATH: ':memory:' };
 const child = spawn(process.execPath, ['dist/node.mjs'], { env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
 let log = '';
 child.stdout.on('data', chunk => { log += chunk; });
@@ -38,7 +39,7 @@ try {
   const client = await fetch(origin + script);
   assert.match(client.headers.get('content-type'), /javascript/);
   const clientCode = await client.text();
-  assert.ok(!clientCode.includes('GOOGLE_MAPS_API_KEY') && !clientCode.includes(testPasswordHash) && !clientCode.includes(testSessionSecret));
+  assert.ok(!clientCode.includes('GOOGLE_MAPS_API_KEY') && !clientCode.includes(testPasswordHash) && !clientCode.includes(testSessionSecret) && !clientCode.includes(testTwilioToken));
   assert.match(client.headers.get('cache-control'), /immutable/);
 
   for (const path of ['/server/node.mjs', '/.env.local', '/package.json', '/assets/../../server/node.mjs', '/api/missing']) assert.equal((await fetch(origin + path)).status, 404, path);
@@ -186,7 +187,7 @@ try {
   for (const name of await readdir('dist/client/assets')) {
     if (name.endsWith('.js')) {
       const source = await readFile('dist/client/assets/' + name, 'utf8');
-      assert.ok(!source.includes('GOOGLE_MAPS_API_KEY') && !source.includes(testPasswordHash) && !source.includes(testSessionSecret));
+      assert.ok(!source.includes('GOOGLE_MAPS_API_KEY') && !source.includes(testPasswordHash) && !source.includes(testSessionSecret) && !source.includes(testTwilioToken));
     }
   }
   console.log('PASS: production server, automatic treatment-duration availability, overlap protection, password admin controls, manual message bookings, rescheduling, holidays, and secret isolation.');

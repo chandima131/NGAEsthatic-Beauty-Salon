@@ -15,8 +15,13 @@ import {
   verifyAdminSession,
   type AdminAuthEnvironment,
 } from './admin-auth';
+import {
+  normaliseSmsPhone,
+  sendBookingSmsNotifications,
+  type TwilioSmsEnvironment,
+} from './twilio-sms';
 
-export type BookingEnvironment = AdminAuthEnvironment & {
+export type BookingEnvironment = AdminAuthEnvironment & TwilioSmsEnvironment & {
   DB?: D1DatabaseLike;
 };
 
@@ -198,7 +203,7 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
       const treatment = treatmentName ? treatmentsByName.get(treatmentName) : undefined;
       if (!slotId || extra !== undefined || !date || !startTime || !customerName || !phone || !treatment || input.consent !== true) return json({ error: 'Complete all required booking details.' }, 400);
       if (!isRealDate(date) || !timePattern.test(startTime)) return json({ error: 'Choose a valid appointment time.' }, 400);
-      if (!/^[0-9+() .-]{6,30}$/.test(phone)) return json({ error: 'Enter a valid phone number.' }, 400);
+      if (!normaliseSmsPhone(phone)) return json({ error: 'Enter a valid mobile number, including the country code when outside the UK.' }, 400);
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Enter a valid email address.' }, 400);
       const booking = await store.createBooking({
         date,
@@ -211,6 +216,7 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
         customerNotes: customerNotes || null,
         status: 'confirmed',
       });
+      await sendBookingSmsNotifications('confirmation', booking, env);
       return json({
         booking: {
           reference: booking.id.slice(0, 8).toUpperCase(),
@@ -261,7 +267,7 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
         const adminNotes = textField(input.adminNotes, 600);
         const treatment = treatmentName ? treatmentsByName.get(treatmentName) : undefined;
         if (!customerName || !phone || !treatment || !date || !isRealDate(date) || !startTime || !timePattern.test(startTime) || adminNotes === null) return json({ error: 'Complete the customer, treatment, date, and time.' }, 400);
-        if (!/^[0-9+() .-]{6,30}$/.test(phone)) return json({ error: 'Enter a valid phone number.' }, 400);
+        if (!normaliseSmsPhone(phone)) return json({ error: 'Enter a valid mobile number, including the country code when outside the UK.' }, 400);
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Enter a valid email address.' }, 400);
         const booking = await store.createBooking({
           date,
@@ -275,6 +281,7 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
           adminNotes: adminNotes || 'Booked directly by the salon.',
           status: 'confirmed',
         });
+        await sendBookingSmsNotifications('confirmation', booking, env);
         return json({ booking, message: 'Manual booking added and confirmed.' }, 201);
       }
 
@@ -318,7 +325,11 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
       if (bookingMatch) {
         if (request.method === 'DELETE') {
           if (!sameOrigin(request)) return json({ error: 'Cross-site requests are not accepted.' }, 403);
+          const existing = await store.getBooking(bookingMatch[1]);
           const deleted = await store.deleteBooking(bookingMatch[1]);
+          if (deleted && existing && (existing.status === 'pending' || existing.status === 'confirmed')) {
+            await sendBookingSmsNotifications('cancellation', existing, env);
+          }
           return deleted ? json({ message: 'Booking deleted.' }) : json({ error: 'Booking not found.' }, 404);
         }
         if (request.method !== 'PATCH') return methodNotAllowed(['PATCH', 'DELETE']);
@@ -329,7 +340,17 @@ export async function handleBookingApi(request: Request, env: BookingEnvironment
         const date = input.date === undefined ? undefined : textField(input.date, 10, true);
         const startTime = input.startTime === undefined ? undefined : textField(input.startTime, 5, true);
         if (!status || adminNotes === null || (date !== undefined && (!date || !isRealDate(date))) || (startTime !== undefined && (!startTime || !timePattern.test(startTime)))) return json({ error: 'Enter a valid booking status, appointment time, and note.' }, 400);
+        const previous = await store.getBooking(bookingMatch[1]);
+        if (!previous) throw new BookingNotFoundError();
         const booking = await store.updateBooking(bookingMatch[1], { status, adminNotes: adminNotes || null, date, startTime });
+        const rescheduled = booking.slot_date !== previous.slot_date || booking.start_time !== previous.start_time;
+        if (booking.status === 'cancelled' && previous.status !== 'cancelled') {
+          await sendBookingSmsNotifications('cancellation', booking, env);
+        } else if (rescheduled && (booking.status === 'pending' || booking.status === 'confirmed')) {
+          await sendBookingSmsNotifications('reschedule', booking, env);
+        } else if (booking.status === 'confirmed' && previous.status !== 'confirmed') {
+          await sendBookingSmsNotifications('confirmation', booking, env);
+        }
         return json({ booking, message: 'Booking updated.' });
       }
     }

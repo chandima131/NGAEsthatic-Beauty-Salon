@@ -58,7 +58,7 @@ export function Footer() {
       <div><h3>Contact &amp; social</h3><a className="footer-phone" href={business.telephone}>{business.phone}</a><a href={bookingUrl()}>Message on WhatsApp &rarr;</a><SocialLinks labelled className="footer-socials"/><a className="admin-link" href="/admin">Salon admin</a></div>
     </div>
     <div className="footer-info" id="privacy">
-      <details><summary>Privacy</summary><p>Booking details and contact information are stored securely so the salon can manage your appointment. The salon uses them only to arrange and administer your booking. Please do not include medical or sensitive information. WhatsApp, Instagram and Google Maps follow their own privacy policies.</p></details>
+      <details><summary>Privacy</summary><p>Booking details and contact information are stored securely so the salon can manage your appointment. The salon uses them only to arrange and administer your booking, including transactional SMS updates. Please do not include medical or sensitive information. WhatsApp, Instagram and Google Maps follow their own privacy policies.</p></details>
       <details><summary>Cookies</summary><p>No optional analytics or advertising tools are enabled. Google Maps is embedded in the location section and may set its own cookies. Secure sign-in and essential hosting features may use technical cookies.</p></details>
       <details><summary>Website terms</summary><p>An online appointment is confirmed when the booking confirmation and reference appear on screen. Treatment availability and prices may change; website descriptions do not promise treatment outcomes.</p></details>
     </div>
